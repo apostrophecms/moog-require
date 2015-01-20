@@ -1,6 +1,8 @@
-# apostrophe-resolver (todo: name isn't meta enough)
+[![Build Status](https://travis-ci.org/punkave/resolution.svg?branch=master)](https://travis-ci.org/punkave/resolution)
 
-`apostrophe-resolver` provides powerful module subclassing. Features include:
+# resolution
+
+`resolution` provides powerful module subclassing. Features include:
 
 * Implicit `require` of base classes from project level, or from npm
 * Implicit subclassing at project level to do simple overrides and also change the behavior of all subclasses

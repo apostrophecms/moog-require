@@ -1,0 +1,29 @@
+{
+  "name": "resolution",
+  "version": "0.0.1",
+  "description": "Resolution provides powerful module subclassing.",
+  "main": "index.js",
+  "dependencies": {
+    "lodash": "2.4.x",
+    "async": "0.9.x"
+  },
+  "devDependencies": {
+    "mocha": "2.1.x"
+  },
+  "scripts": {
+    "test": "mocha test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/punkave/resolution"
+  },
+  "keywords": [
+    "apostrophe",
+    "subclass",
+    "subclassing",
+    "module",
+    "loader"
+  ],
+  "author": "P'unk Avenue",
+  "license": "MIT"
+}

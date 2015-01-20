@@ -9,103 +9,176 @@ module.exports = function(options) {
   self.resolved = {};
 
   self.create = function(type, options, callback) {
+
+    // You can't create an instance of something that
+    // is not present in your definitions (you can't
+    // create an instance of an abstract base class)
+
+    if (!self.options.definitions[type]) {
+      return callback(new Error('unconfigured module type: ' + type));
+    }
+
+    var definition = resolve(type);
+
+    return instantiate(definition, options, callback);
+
+    function resolve(type, npmOnly) {
+
+      // I have: a type name
+      // I want: the right definition object, with the right
+      // 'extend' chain
+
+      if (_.has(self.resolved, type)) {
+        return self.resolved[type];
+      }
+
+      // Local module folder index.js and app.js are both allowed,
+      // app.js wins
+
+      var definition;
+
+      if (!npmOnly) {
+        var projectLevelFolder = self.options.localModules + '/' + type;
+        var projectLevelDefinition = projectLevelFolder + '/index.js';
+        if (fs.existsSync(projectLevelDefinition)) {
+          definition = require(projectLevelDefinition);
+        }
+
+        if (self.options.definitions[type]) {
+          if (definition) {
+            _.extend(definition, self.options.definitions[type]);
+          } else {
+            definition = self.options.definitions[type];
+          }
+        }
+      }
+
+      // Now look in npm
+
+      var npmDefinition;
+
+      var npmPath = getNpmPath(type);
+      if (npmPath) {
+        npmDefinition = require(npmPath);
+        npmDefinition.__npm = true;
+        npmDefinition.__dirname = path.dirname(npmPath);
+        npmDefinition.name = type;
+        if (definition) {
+          definition.extend = npmDefinition;
+          resolveExtend(npmDefinition);
+        } else {
+          definition = npmDefinition;
+        }
+      }
+
+      if (!definition) {
+        return callback(new Error('No such type is defined, in app.js, project-level modules or npm: ' + type));
+      }
+
+      resolveExtend(definition);
+
+      self.resolved[type] = definition;
+
+      return definition;
+    }
+
+    function resolveExtend(definition) {
+      if (definition.extend) {
+        if (typeof(definition.extend === 'object')) {
+          // Already resolved
+          return;
+        }
+        if (typeof(definition.extend) === 'string') {
+          definition.extend = resolve(definition.extend);
+        }
+      } else {
+        // Implicit subclassing
+
+        // If this is not from npm, and has the same name as an
+        // available npm module, implicitly extend that module,
+        // and make our module name unique
+        var name = definition.__name;
+        if ((!definition.__npm) && getNpmPath(name)) {
+          definition.__name = 'my-' + name;
+          definition.extend = resolve(name, true);
+        } else if (self.options.defaultBaseClass && (definition.__name !== self.options.defaultBaseClass)) {
+          // If there is a default base class, and we're not it,
+          // implicitly extend that base class
+          definition.extend = resolve(self.options.defaultBaseClass);
+        } else {
+          // We don't extend anything, which is OK too
+        }
+      }
+    }
+
+    function instantiate(definition, options, callback) {
+      var that = {};
+      var next = definition;
+      var steps = [];
+      options._directories = options._directories || [];
+
+      while (next) {
+        options._directories.push({ dirname: next.__dirname, name: next.__name });
+        steps.push(next);
+        next = next.extend;
+      }
+
+      return async.series({
+        beforeConstruct: function(callback) {
+          return async.eachSeries(steps, function(step, callback) {
+            // Apply the simple option defaults
+            _.each(step, function(val, key) {
+              if ((key === 'construct') || (key === 'extend') || (key === 'beforeConstruct')) {
+                return;
+              }
+              if (key.substr(0, 2) === '__') {
+                return;
+              }
+              if (_.has(options, key)) {
+                return;
+              }
+              options[key] = val;
+            });
+
+            // Invoke beforeConstruct, defaulting to an empty one
+            var beforeConstruct = next.beforeConstruct || function(self, options, callback) { return setImmediate(callback); };
+
+            // Turn sync into async
+            if (beforeConstruct.length === 2) {
+              var syncBeforeConstruct = beforeConstruct;
+              beforeConstruct = function(self, options, callback) {
+                syncBeforeConstruct(self, options);
+                return setImmediate(callback);
+              };
+            }
+
+            return beforeConstruct(self, options, callback);
+          }, callback);
+        },
+        construct: function(callback) {
+          // Now we want to start from the base class and go down
+          steps.reverse();
+          return async.eachSeries(steps, function(step, callback) {
+            // Invoke construct, defaulting to an empty one
+            var construct = next.construct || function(self, options, callback) { return setImmediate(callback); };
+
+            // Turn sync into async
+            if (construct.length === 2) {
+              var syncConstruct = construct;
+              construct = function(self, options, callback) {
+                syncConstruct(self, options);
+                return setImmediate(callback);
+              };
+            }
+
+            return construct(self, options, callback);
+          });
+        }
+      }, callback);
+    }
   };
-//     function resolve(x) {
-//       if (_.has(self.resolved, x)) {
-//         return self.resolved(x);
-//       }
-//       var definition = {};
-//       var projectLevelFolder = options.localModules + '/' + type;
-//       var projectLevelDefinition = projectLevelFolder + '/index.js';
-//       if (fs.existsSync(projectLevelDefinition)) {
-//         definition = require(projectLevelDefinition);
-//       }
-//       _.extend(definition, options.definitions[x]);
 
-//       var p = require( + '/index.js');
-//       var de = {};
-//       if ()
-//     }
-// resolve(X):
-
-//   p = project level of x
-//   i = index.js of x
-
-//   Merge them:
-
-//   p = p.defaults(i)
-//   p.__dirname = meta.localModules/X
-//   p.__name = x
-//   resolveExtend(p)
-//   return p
-
-// resolveExtend(p):
-//   if (p.extend) {
-//     if (p.extend is a string) {
-//       p.extend = ourRequire(p.extend)
-//     }
-//   } else {
-//     p.extend = npmRequire(our name) or npmRequire(meta.defaultClass)
-//     p.__name = 'my-' + p.__name;
-//   }
-
-// ourRequire(name):
-//   m = require from project or npm
-//   resolveExtend(m)
-
-// npmRequire(name):
-//   var path = require.resolve(name)
-//   var dir = dirname(path)
-//   m = require(path)
-//   m.__dirname = dir
-//   m.__name = basename(dir)
-//   return m
-
-// projectRequire(name):
-//   if folder exists (meta.localModules/X)
-//     if file exists meta.localModules/X/index.js
-//       return npmRequire(meta.localModules/X/index.js)
-//     else
-//       return {
-//         // So we can do overrides of templates and push browser
-//         // side code, even if we have no index.js
-//         __dirname: meta.localModules/X
-//         name: name
-//       }
-//   return null
-
-// instantiate(x, options):
-//   d = resolve(x)
-//   var that = {}
-//   var next = d
-
-//   options._directories = options._directories || []
-//   while next
-//     options._directories.push({ dirname: d.__dirname, name: d.__name })
-//     next = next.extend
-
-//   next = d
-
-//   // options are set deepest subclass first
-//   while next
-//     for (all properties that are not beforeConstruct or construct)
-//       apply as defaults to 'options' object
-//     if next.beforeConstruct
-//       next.beforeConstruct(o, options)
-//     next = next.extend
-
-//   construct(d, o, options)
-
-//   // Now in reverse order: base class first
-//   construct(d, o, options):
-//     if (d.extend)
-//       construct(d.extend, o, options)
-//     if d.construct
-//       d.construct(o, options)
-
-//   };
-
-  self.createAll = function(options, callback) {
+  self.createAll = function(globalOptions, specificOptions, callback) {
     return async.eachSeries(_.keys(options.definitions), self.create, callback);
   };
 

@@ -4,8 +4,8 @@
   "description": "Resolution provides powerful module subclassing.",
   "main": "index.js",
   "dependencies": {
-    "lodash": "2.4.x",
-    "async": "0.9.x"
+    "async": "^0.9.0",
+    "lodash": "2.4.x"
   },
   "devDependencies": {
     "mocha": "2.1.x"

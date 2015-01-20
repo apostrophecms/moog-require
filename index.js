@@ -167,7 +167,6 @@ module.exports = function(options) {
 
             // Invoke beforeConstruct, defaulting to an empty one
             var beforeConstruct = step.beforeConstruct || function(self, options, callback) { return setImmediate(callback); };
-
             // Turn sync into async
             if (beforeConstruct.length === 2) {
               var syncBeforeConstruct = beforeConstruct;
@@ -176,8 +175,11 @@ module.exports = function(options) {
                 return setImmediate(callback);
               };
             }
+            if (beforeConstruct.length < 3) {
+              return callback(new Error('beforeConstruct must take the following arguments: "self", "options", and (if it is async) "callback"'));
+            }
 
-            return beforeConstruct(self, options, callback);
+            return beforeConstruct(that, options, callback);
           }, callback);
         },
         construct: function(callback) {
@@ -195,11 +197,18 @@ module.exports = function(options) {
                 return setImmediate(callback);
               };
             }
-
-            return construct(self, options, callback);
-          });
+            if (construct.length < 3) {
+              return callback(new Error('construct must take the following arguments: "self", "options", and (if it is async) "callback"'));
+            }
+            return construct(that, options, callback);
+          }, callback);
         }
-      }, callback);
+      }, function(err) {
+        if (err) {
+          return callback(err);
+        }
+        return callback(null, that);
+      });
     }
   };
 

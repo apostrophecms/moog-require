@@ -9,6 +9,7 @@ describe('resolution', function() {
 
     var resolver = require('../index.js')({
       localModules: __dirname + '/project_modules',
+      root: module,
       definitions: { }
     });
 
@@ -26,9 +27,10 @@ describe('resolution', function() {
   describe('resolver.create', function() {
     var resolver;
 
-    it('should create a subclass with no options', function() {
+    it('should create a subclass with no options', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'testModule': { }
         }
@@ -37,12 +39,14 @@ describe('resolution', function() {
       resolver.create('testModule', {}, function(err, testModule) {
         assert(!err);
         assert(testModule);
+        return done();
       });
     });
 
-    it('should create a subclass with overrides of default options', function() {
+    it('should create a subclass with overrides of default options', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'testModule': {
             color: 'red'
@@ -53,12 +57,14 @@ describe('resolution', function() {
       resolver.create('testModule', {}, function(err, testModule) {
         assert(!err);
         assert(testModule._options.color === 'red');
+        return done();
       });
     });
 
-    it('should create a subclass with overrides of default options in localModules folder', function() {
+    it('should create a subclass with overrides of default options in localModules folder', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           // testModuleTwo is defined in ./project_modules
           'testModuleTwo': { }
@@ -68,12 +74,14 @@ describe('resolution', function() {
       resolver.create('testModuleTwo', {}, function(err, testModuleTwo) {
         assert(!err);
         assert(testModuleTwo._options.color === 'red');
+        return done();
       });
     });
 
-    it('should create a subclass with overrides of default options at runtime', function() {
+    it('should create a subclass with overrides of default options at runtime', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'testModule': { }
         }
@@ -82,12 +90,14 @@ describe('resolution', function() {
       resolver.create('testModule', { color: 'purple' }, function(err, testModule) {
         assert(!err);
         assert(testModule._options.color === 'purple');
+        return done();
       });
     });
 
-    it('should create a subclass with a new name using the `extend` property', function() {
+    it('should create a subclass with a new name using the `extend` property', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'myTestModule': {
             extend: 'testModule',
@@ -100,12 +110,14 @@ describe('resolution', function() {
         assert(!err);
         assert(myTestModule);
         assert(myTestModule._options.color === 'red');
+        return done();
       });
     });
 
-    it('should create a subclass with a new name by extending a module defined in localModules', function() {
+    it('should create a subclass with a new name by extending a module defined in localModules', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'myTestModule': {
             extend: 'testModuleTwo',
@@ -119,12 +131,14 @@ describe('resolution', function() {
         assert(myTestModule);
         assert(myTestModule._options.color === 'blue');
         assert(myTestModule._options.newProperty === 42);
+        return done();
       });
     });
 
-    it('should create a subclass of a subclass', function() {
+    it('should create a subclass of a subclass', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'myTestModule': {
             extend: 'testModule'
@@ -140,23 +154,59 @@ describe('resolution', function() {
         assert(!err);
         assert(myTestModule);
         assert(myTestModule._options.color === 'blue');
-      });
-
-      resolver.create('mySubTestModule', {}, function(err, mySubTestModule) {
-        assert(!err);
-        assert(mySubTestModule);
-        assert(mySubTestModule._options.color === 'orange');
+        resolver.create('mySubTestModule', {}, function(err, mySubTestModule) {
+          assert(!err);
+          assert(mySubTestModule);
+          assert(mySubTestModule._options.color === 'orange');
+          return done();
+        });
       });
     });
+
+    it('should create a subclass when both parent and subclass are in npm', function(done) {
+      resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testModuleThree': {}
+        }
+      });
+
+      resolver.create('testModuleThree', {}, function(err, testModuleThree) {
+        assert(!err);
+        assert(testModuleThree);
+        assert(testModuleThree._options.age === 30);
+        return done();
+      });
+    });
+
+    it('should create a subclass when the parent is an npm dependency of the subclass', function(done) {
+      resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testModuleFour': {}
+        }
+      });
+
+      resolver.create('testModuleFour', {}, function(err, testModuleFour) {
+        assert(!err);
+        assert(testModuleFour);
+        assert(testModuleFour._options.age === 70);
+        return done();
+      });
+    });
+
   });
 
 
   describe('resolver.createAll', function() {
     var resolver;
 
-    it('should create two subclasses', function() {
+    it('should create two subclasses', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'myTestModule': { },
           'myTestModuleTwo': { }
@@ -167,12 +217,14 @@ describe('resolution', function() {
         assert(!err);
         assert(modules.myTestModule);
         assert(modules.myTestModuleTwo);
+        return done();
       });
     });
 
-    it('should create two subclasses with runtime options passed using `specific` options', function() {
+    it('should create two subclasses with runtime options passed using `specific` options', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'myTestModule': { },
           'myTestModuleTwo': { }
@@ -189,12 +241,14 @@ describe('resolution', function() {
         assert(modules.myTestModule._options.color === 'green');
         assert(modules.myTestModuleTwo);
         assert(modules.myTestModuleTwo._options.color === 'green');
+        return done();
       });
     });
 
-    it('should create two subclasses with runtime options passed using `global` options', function() {
+    it('should create two subclasses with runtime options passed using `global` options', function(done) {
       resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'myTestModule': { },
           'myTestModuleTwo': { }
@@ -207,14 +261,16 @@ describe('resolution', function() {
         assert(modules.myTestModule._options.color === 'green');
         assert(modules.myTestModuleTwo);
         assert(modules.myTestModuleTwo._options.color === 'green');
+        return done();
       });
     });
   });
 
   describe('resolver.bridge', function() {
-    it('should run successfully', function() {
+    it('should run successfully', function(done) {
       var resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
+        root: module,
         definitions: {
           'myTestModule': { },
           'myTestModuleTwo': { }
@@ -224,6 +280,7 @@ describe('resolution', function() {
       resolver.createAll({ }, { }, function(err, modules) {
         assert(!err);
         resolver.bridge(modules);
+        return done();
       });
 
 

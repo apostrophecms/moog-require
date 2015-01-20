@@ -1,5 +1,8 @@
 var async = require('async');
 var _ = require('lodash');
+var fs = require('fs');
+var npmResolve = require('resolve');
+var path = require('path');
 
 module.exports = function(options) {
 
@@ -7,6 +10,10 @@ module.exports = function(options) {
 
   self.options = options;
   self.resolved = {};
+  self.root = options.root;
+  if (!self.root) {
+    throw 'The root option is required. Pass the node variable "module" as root. This allows resolution to require modules on your behalf.';
+  }
 
   self.create = function(type, options, callback) {
 
@@ -22,8 +29,11 @@ module.exports = function(options) {
 
     return instantiate(definition, options, callback);
 
-    function resolve(type, npmOnly) {
+    function resolve(type, npmOnly, relativeTo) {
 
+      if (!relativeTo) {
+        relativeTo = self.root.filename;
+      }
       // I have: a type name
       // I want: the right definition object, with the right
       // 'extend' chain
@@ -40,8 +50,10 @@ module.exports = function(options) {
       if (!npmOnly) {
         var projectLevelFolder = self.options.localModules + '/' + type;
         var projectLevelDefinition = projectLevelFolder + '/index.js';
+        projectLevelDefinition = path.normalize(projectLevelDefinition);
         if (fs.existsSync(projectLevelDefinition)) {
-          definition = require(projectLevelDefinition);
+          definition = self.root.require(projectLevelDefinition);
+          definition.__filename = projectLevelDefinition;
         }
 
         if (self.options.definitions[type]) {
@@ -49,6 +61,7 @@ module.exports = function(options) {
             _.extend(definition, self.options.definitions[type]);
           } else {
             definition = self.options.definitions[type];
+            definition.__filename = self.root.filename;
           }
         }
       }
@@ -57,11 +70,12 @@ module.exports = function(options) {
 
       var npmDefinition;
 
-      var npmPath = getNpmPath(type);
+      var npmPath = getNpmPath(relativeTo, type);
       if (npmPath) {
         npmDefinition = require(npmPath);
         npmDefinition.__npm = true;
         npmDefinition.__dirname = path.dirname(npmPath);
+        npmDefinition.__filename = npmPath;
         npmDefinition.name = type;
         if (definition) {
           definition.extend = npmDefinition;
@@ -82,14 +96,25 @@ module.exports = function(options) {
       return definition;
     }
 
+    function getNpmPath(parentPath, type) {
+      try {
+        return npmResolve.sync(type, { basedir: path.dirname(parentPath) });
+      } catch (e) {
+        // Not found via npm. This does not mean it doesn't
+        // exist as a project-level thing
+        return null;
+      }
+    }
+
     function resolveExtend(definition) {
       if (definition.extend) {
-        if (typeof(definition.extend === 'object')) {
+        if (typeof(definition.extend) === 'object') {
           // Already resolved
           return;
         }
         if (typeof(definition.extend) === 'string') {
-          definition.extend = resolve(definition.extend);
+          // require it relative to the module that extends it
+          definition.extend = resolve(definition.extend, false, definition.__filename);
         }
       } else {
         // Implicit subclassing
@@ -98,7 +123,7 @@ module.exports = function(options) {
         // available npm module, implicitly extend that module,
         // and make our module name unique
         var name = definition.__name;
-        if ((!definition.__npm) && getNpmPath(name)) {
+        if ((!definition.__npm) && getNpmPath(self.root.filename, name)) {
           definition.__name = 'my-' + name;
           definition.extend = resolve(name, true);
         } else if (self.options.defaultBaseClass && (definition.__name !== self.options.defaultBaseClass)) {
@@ -141,7 +166,7 @@ module.exports = function(options) {
             });
 
             // Invoke beforeConstruct, defaulting to an empty one
-            var beforeConstruct = next.beforeConstruct || function(self, options, callback) { return setImmediate(callback); };
+            var beforeConstruct = step.beforeConstruct || function(self, options, callback) { return setImmediate(callback); };
 
             // Turn sync into async
             if (beforeConstruct.length === 2) {
@@ -160,7 +185,7 @@ module.exports = function(options) {
           steps.reverse();
           return async.eachSeries(steps, function(step, callback) {
             // Invoke construct, defaulting to an empty one
-            var construct = next.construct || function(self, options, callback) { return setImmediate(callback); };
+            var construct = step.construct || function(self, options, callback) { return setImmediate(callback); };
 
             // Turn sync into async
             if (construct.length === 2) {
@@ -189,5 +214,7 @@ module.exports = function(options) {
       }
     });
   }
+
+  return self;
 };
 

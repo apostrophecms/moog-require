@@ -211,6 +211,23 @@ describe('resolution', function() {
     });
   });
 
-  describe('resolver.bridge', function() { });
+  describe('resolver.bridge', function() {
+    it('should run successfully', function() {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        definitions: {
+          'myTestModule': { },
+          'myTestModuleTwo': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        resolver.bridge(modules);
+      });
+
+
+    });
+  });
 
 });

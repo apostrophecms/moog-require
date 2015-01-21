@@ -333,7 +333,7 @@ describe('resolution', function() {
       resolver.createAll({ }, { }, function(err, modules) {
         assert(!err);
         assert(modules.newModule);
-        assert(modules.newModule._options.color === 'red');
+        assert(modules.newModule._options.color === 'blue');
         return done();
       });
     });
@@ -470,6 +470,25 @@ describe('resolution', function() {
       resolver.createAll({ }, { }, function(err, modules) {
         assert(err);
         assert(err.message === 'I have failed.');
+        return done();
+      });
+    });
+  });
+
+  describe('order of operations', function() {
+    it('should favor project-level `construct` over the npm module\'s `construct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testConstructOverride': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(!modules.testConstructOverride._options);
+        assert(modules.testConstructOverride._differentOptions);
         return done();
       });
     });

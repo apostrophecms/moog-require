@@ -619,4 +619,31 @@ describe('resolution', function() {
     });
   });
 
+  describe('bundles', function() {
+    it('should expose two new modules via a bundle', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        bundles: ['testBundle'],
+        definitions: {
+          'bundleModuleOne': { },
+          'bundleModuleTwo': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.bundleModuleOne);
+        assert(modules.bundleModuleOne._options.color === 'blue');
+        assert(modules.bundleModuleTwo);
+        assert(modules.bundleModuleTwo._options.color === 'blue');
+        return done();
+      });
+    });
+  });
+
+  // describe('error handling', function() {
+
+  // });
+
 });

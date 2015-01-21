@@ -17,8 +17,8 @@ module.exports = function(options) {
     throw 'The root option is required. Pass the node variable "module" as root. This allows resolution to require modules on your behalf.';
   }
 
-  if (self.option.bundles) {
-    _.each(self.option.bundles, function(bundleName) {
+  if (self.options.bundles) {
+    _.each(self.options.bundles, function(bundleName) {
       var bundlePath = getNpmPath(self.root.filename, bundleName);
       if (!bundlePath) {
         throw 'The configured bundle ' + bundleName + ' was not found in npm.';

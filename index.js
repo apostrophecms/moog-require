@@ -213,7 +213,30 @@ module.exports = function(options) {
   };
 
   self.createAll = function(globalOptions, specificOptions, callback) {
-    return async.eachSeries(_.keys(options.definitions), self.create, callback);
+    var result = {};
+    return async.eachSeries(
+      _.keys(options.definitions),
+      function(name, callback) {
+        var options = {};
+        _.extend(options, globalOptions);
+        if (_.has(specificOptions, name)) {
+          _.extend(options, specificOptions[name]);
+        }
+        return self.create(name, options, function(err, obj) {
+          if (err) {
+            return callback(err);
+          }
+          result[name] = obj;
+          return callback(null);
+        });
+      },
+      function(err) {
+        if (err) {
+          return callback(err);
+        }
+        return callback(null, result);
+      }
+    );
   };
 
   self.bridge = function(modules) {

@@ -32,7 +32,7 @@ module.exports = function(options) {
         throw 'The configured bundle ' + bundleName + ' does not have a "modules" property within its "resolutionBundle" property.';
       }
       _.each(modules, function(name) {
-        self.bundled[name] = path.normalize(bundlePath + '/' + bundle.resolutionBundle.directory + '/' + name + '/index.js');
+        self.bundled[name] = path.normalize(path.dirname(bundlePath) + '/' + bundle.resolutionBundle.directory + '/' + name + '/index.js');
       });
     });
   }
@@ -110,19 +110,6 @@ module.exports = function(options) {
       self.resolved[type] = definition;
 
       return definition;
-    }
-
-    function getNpmPath(parentPath, type) {
-      if (_.has(self.bundled, type)) {
-        return self.bundled[type];
-      }
-      try {
-        return npmResolve.sync(type, { basedir: path.dirname(parentPath) });
-      } catch (e) {
-        // Not found via npm. This does not mean it doesn't
-        // exist as a project-level thing
-        return null;
-      }
     }
 
     function resolveExtend(definition) {
@@ -275,5 +262,18 @@ module.exports = function(options) {
   }
 
   return self;
+
+  function getNpmPath(parentPath, type) {
+    if (_.has(self.bundled, type)) {
+      return self.bundled[type];
+    }
+    try {
+      return npmResolve.sync(type, { basedir: path.dirname(parentPath) });
+    } catch (e) {
+      // Not found via npm. This does not mean it doesn't
+      // exist as a project-level thing
+      return null;
+    }
+  }
 };
 

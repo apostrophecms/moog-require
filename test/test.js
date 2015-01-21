@@ -320,6 +320,24 @@ describe('resolution', function() {
 
   describe('module structure', function() {
 
+    it('should accept a `defaultBaseClass` that is inherited by empty definitions', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        defaultBaseClass: 'testModule',
+        root: module,
+        definitions: {
+          'newModule': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.newModule);
+        assert(modules.newModule._options.color === 'red');
+        return done();
+      });
+    });
+
     // =================================================================
     // PASSING
     // =================================================================

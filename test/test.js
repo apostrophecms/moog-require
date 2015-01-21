@@ -642,8 +642,26 @@ describe('resolution', function() {
     });
   });
 
-  // describe('error handling', function() {
+  describe('error handling', function() {
+    it('should prevent cyclical module definitions', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'myNewModuleOne': {
+            extend: 'myNewModuleTwo'
+          },
+          'myNewModuleTwo': {
+            extend: 'myNewModuleOne'
+          }
+        }
+      });
 
-  // });
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(err);
+        return done();
+      });
+    });
+  });
 
 });

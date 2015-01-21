@@ -477,19 +477,143 @@ describe('resolution', function() {
   });
 
   describe('order of operations', function() {
-    it('should favor project-level `construct` over the npm module\'s `construct`', function(done) {
+
+    // =================================================================
+    // MULTIPLE `construct`s AND `beforeConstruct`s
+    // =================================================================
+
+    it('should call both the project-level `construct` and the npm module\'s `construct`', function(done) {
       var resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
         root: module,
         definitions: {
-          'testConstructOverride': { }
+          'testDifferentConstruct': {
+            extend: 'testModule'
+          }
         }
       });
 
       resolver.createAll({ }, { }, function(err, modules) {
         assert(!err);
-        assert(!modules.testConstructOverride._options);
-        assert(modules.testConstructOverride._differentOptions);
+        assert(modules.testDifferentConstruct._options);
+        assert(modules.testDifferentConstruct._differentOptions);
+        return done();
+      });
+    });
+
+    it('should call both the project-level `beforeConstruct` and the npm module\'s `beforeConstruct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testDifferentConstruct': {
+            extend: 'testModule'
+          }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.testDifferentConstruct._bcOptions);
+        assert(modules.testDifferentConstruct._bcDifferentOptions);
+        return done();
+      });
+    });
+
+    it('should override the project-level `construct` using a definitions-level `construct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testDifferentConstruct': {
+            extend: 'testModule',
+            construct: function(self, options) {
+              self._definitionsLevelOptions = options;
+            }
+          }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.testDifferentConstruct._options);
+        assert(!modules.testDifferentConstruct._differentOptions);
+        assert(modules.testDifferentConstruct._definitionsLevelOptions);
+        return done();
+      });
+    });
+
+    it('should override the project-level `beforeConstruct` using a definitions-level `beforeConstruct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testDifferentConstruct': {
+            extend: 'testModule',
+            beforeConstruct: function(self, options) {
+              self._bcDefinitionsLevelOptions = options;
+            }
+          }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.testDifferentConstruct._bcOptions);
+        assert(!modules.testDifferentConstruct._bcDifferentOptions);
+        assert(modules.testDifferentConstruct._bcDefinitionsLevelOptions);
+        return done();
+      });
+    });
+
+    // =================================================================
+    // ORDER OF OPERATIONS
+    // =================================================================
+
+    it('should respect baseClass-first order-of-operations for `beforeConstruct` and `construct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testOrderOfOperations': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.testOrderOfOperations._bcOrderOfOperations[0] === 'notlast');
+        assert(modules.testOrderOfOperations._bcOrderOfOperations[1] === 'last');
+        assert(modules.testOrderOfOperations._orderOfOperations[0] === 'first');
+        assert(modules.testOrderOfOperations._orderOfOperations[1] === 'second');
+        return done();
+      });
+    });
+
+    it('should respect baseClass-first order-of-operations for `beforeConstruct` and `construct` with subclassing', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'subTestOrderOfOperations': {
+            extend: 'testOrderOfOperations',
+            beforeConstruct: function(self, options) {
+              self._bcOrderOfOperations = (self._bcOrderOfOperations || []).concat('first');
+            },
+            construct: function(self, options) {
+              self._orderOfOperations = (self._orderOfOperations || []).concat('third');
+            }
+          }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.subTestOrderOfOperations._bcOrderOfOperations[0] === 'first');
+        assert(modules.subTestOrderOfOperations._bcOrderOfOperations[1] === 'notlast');
+        assert(modules.subTestOrderOfOperations._bcOrderOfOperations[2] === 'last');
+        assert(modules.subTestOrderOfOperations._orderOfOperations[0] === 'first');
+        assert(modules.subTestOrderOfOperations._orderOfOperations[1] === 'second');
+        assert(modules.subTestOrderOfOperations._orderOfOperations[2] === 'third');
         return done();
       });
     });

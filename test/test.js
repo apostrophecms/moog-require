@@ -208,15 +208,15 @@ describe('resolution', function() {
         localModules: __dirname + '/project_modules',
         root: module,
         definitions: {
-          'myTestModule': { },
-          'myTestModuleTwo': { }
+          'testModule': { },
+          'testModuleTwo': { }
         }
       });
 
       resolver.createAll({}, {}, function(err, modules) {
         assert(!err);
-        assert(modules.myTestModule);
-        assert(modules.myTestModuleTwo);
+        assert(modules.testModule);
+        assert(modules.testModuleTwo);
         return done();
       });
     });
@@ -226,21 +226,21 @@ describe('resolution', function() {
         localModules: __dirname + '/project_modules',
         root: module,
         definitions: {
-          'myTestModule': { },
-          'myTestModuleTwo': { }
+          'testModule': { },
+          'testModuleTwo': { }
         }
       });
 
       resolver.createAll({}, {
-        myTestModule: { color: 'green' },
-        myTestModuleTwo: { color: 'green' }
+        testModule: { color: 'green' },
+        testModuleTwo: { color: 'green' }
       },
         function(err, modules) {
         assert(!err);
-        assert(modules.myTestModule);
-        assert(modules.myTestModule._options.color === 'green');
-        assert(modules.myTestModuleTwo);
-        assert(modules.myTestModuleTwo._options.color === 'green');
+        assert(modules.testModule);
+        assert(modules.testModule._options.color === 'green');
+        assert(modules.testModuleTwo);
+        assert(modules.testModuleTwo._options.color === 'green');
         return done();
       });
     });
@@ -250,17 +250,17 @@ describe('resolution', function() {
         localModules: __dirname + '/project_modules',
         root: module,
         definitions: {
-          'myTestModule': { },
-          'myTestModuleTwo': { }
+          'testModule': { },
+          'testModuleTwo': { }
         }
       });
 
       resolver.createAll({ color: 'green' }, { }, function(err, modules) {
         assert(!err);
-        assert(modules.myTestModule);
-        assert(modules.myTestModule._options.color === 'green');
-        assert(modules.myTestModuleTwo);
-        assert(modules.myTestModuleTwo._options.color === 'green');
+        assert(modules.testModule);
+        assert(modules.testModule._options.color === 'green');
+        assert(modules.testModuleTwo);
+        assert(modules.testModuleTwo._options.color === 'green');
         return done();
       });
     });
@@ -272,19 +272,39 @@ describe('resolution', function() {
         localModules: __dirname + '/project_modules',
         root: module,
         definitions: {
-          'myTestModule': { },
-          'myTestModuleTwo': { }
+          'testModule': { },
+          'testModuleTwo': { }
         }
       });
 
       resolver.createAll({ }, { }, function(err, modules) {
         assert(!err);
+        assert(module.testModule);
+        assert(module.testModuleTwo);
         resolver.bridge(modules);
         return done();
       });
-
-
     });
   });
+
+  // describe('module pattern', function() {
+  //   it('should accept a synchronous `construct` method', function(done) {
+  //     var resolver = require('../index.js')({
+  //       localModules: __dirname + '/project_modules',
+  //       root: module,
+  //       definitions: {
+  //         'testModule': { },
+  //         'testModuleTwo': { }
+  //       }
+  //     });
+
+  //     resolver.createAll({ }, { }, function(err, modules) {
+  //       assert(!err);
+  //       assert(modules.length);
+  //       resolver.bridge(modules);
+  //       return done();
+  //     });
+  //   });
+  // });
 
 });

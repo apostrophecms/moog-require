@@ -282,8 +282,6 @@ describe('resolution', function() {
         resolver.bridge(modules);
         return done();
       });
-
-
     });
   });
 

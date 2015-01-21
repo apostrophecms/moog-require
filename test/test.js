@@ -208,15 +208,15 @@ describe('resolution', function() {
         localModules: __dirname + '/project_modules',
         root: module,
         definitions: {
-          'myTestModule': { },
-          'myTestModuleTwo': { }
+          'testModule': { },
+          'testModuleTwo': { }
         }
       });
 
       resolver.createAll({}, {}, function(err, modules) {
         assert(!err);
-        assert(modules.myTestModule);
-        assert(modules.myTestModuleTwo);
+        assert(modules.testModule);
+        assert(modules.testModuleTwo);
         return done();
       });
     });
@@ -272,13 +272,66 @@ describe('resolution', function() {
         localModules: __dirname + '/project_modules',
         root: module,
         definitions: {
-          'myTestModule': { },
-          'myTestModuleTwo': { }
+          'testModule': { },
+          'testModuleTwo': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        resolver.bridge(modules);
+        assert(!err);
+        assert(modules.testModule);
+        assert(modules.testModuleTwo);
+        return done();
+      });
+    });
+
+    it('should pass modules to each other', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testModule': {
+            construct: function(self, options) {
+              self.setBridge = function(modules) {
+                self.otherModule = modules.testModuleTwo;
+              };
+            }
+          },
+          'testModuleTwo': {
+            construct: function(self, options) {
+              self.setBridge = function(modules) {
+                self.otherModule = modules.testModule;
+              };
+            }
+          }
         }
       });
 
       resolver.createAll({ }, { }, function(err, modules) {
         assert(!err);
+        resolver.bridge(modules);
+        assert(modules.testModule.otherModule);
+        assert(modules.testModuleTwo.otherModule);
+        return done();
+      });
+    });
+  });
+
+  describe('module pattern', function() {
+    it('should accept a synchronous `construct` method', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testModule': { },
+          'testModuleTwo': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.length);
         resolver.bridge(modules);
         return done();
       });

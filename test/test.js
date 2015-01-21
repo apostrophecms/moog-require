@@ -476,4 +476,23 @@ describe('resolution', function() {
     });
   });
 
+  describe('order of operations', function() {
+    it('should favor project-level `construct` over the npm module\'s `construct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testConstructOverride': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(!modules.testConstructOverride._options);
+        assert(modules.testConstructOverride._differentOptions);
+        return done();
+      });
+    });
+  });
+
 });

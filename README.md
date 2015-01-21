@@ -13,6 +13,7 @@
 * `beforeConstruct` mechanism for advanced manipulation of options
 * Optional default base class for all modules
 * "self" is always provided, methods are always instance methods: no confusion about the scope of `this`, ever
+* Defining multiple resolution "modules" from a single npm module
 
 While `resolution` is mainly used to subclass singleton manager objects, there is no restriction on creating multiple instances. Raw performance when constructing new objects is not our first priority. But it's certainly fast enough to create, let's say, a "widget editor" each time you need one. Just don't expect it to be as fast as raw prototype-based constructors.
 
@@ -27,7 +28,6 @@ While `resolution` is mainly used to subclass singleton manager objects, there i
 
 module.exports = {
   self.construct = function(self, options) {
-
     self.renderTemplate = function(name, data) {
       var i;
       for (i = 0; (i < options._directories.length); i++) {
@@ -79,7 +79,7 @@ module.exports = {
 
 // in app.js
 
-var resolver = require('apostrophe-resolve')({
+var resolver = require('resolution')({
   localModules: __dirname + '/lib/modules',
   defaultBaseClass: 'module',
   definitions: {
@@ -145,7 +145,10 @@ var resolver = require('apostrophe-resolve')({
 });
 
 // Instantiate all the modules, passing in some
-// universal options that are provided to all of them
+// universal options that are provided to all of them. This
+// only instantiates modules mentioned in `definitions`, but
+// they may override or subclass modules in npm or the
+// project-level modules folder
 
 return resolver.createAll({ mailer: myMailer }, function(err, modules) {
   return modules.events.get({ ... }, function(err, events) {
@@ -170,7 +173,7 @@ return resolver.create('parties', { color: 'purple' }, function(err, party) {
 });
 ```
 
-"What if I want to `require` the module I am `extend`ing myself?"
+## Calling `require` yourself
 
 If you want to write this:
 
@@ -190,3 +193,50 @@ module.exports = {
 ```
 
 This is only necessary if you are using `require` directly. Most of the time, you will be happier if you just specify a module name and let us `require` it for you. This even works in npm modules. (Yes, it will still find it if it is an npm dependency of your own module.)
+
+## Packaging multiple resolution modules in a single npm module
+
+Sometimes several modules are conceptually distinct, but are developed and versioned in tandem. In these cases there is no benefit from separate packaging, just a significant delay in `npm install`. npm peer dependencies are one way to handle this, but [npm peer dependencies may be on the chopping block](http://dailyjs.com/2014/04/16/node-roundup/), and they are significantly slower than pre-packaging modules together.
+
+The difficulty of course is that the link between npm module names and resolution module names is broken when we do this. So we need another way to indicate to resolution that it should look in the appropriate place.
+
+Since searching for "X", where X is actually provided by module "Y", is not a core feature of npm itself we have kept this mechanism simple: you can give `resolution` an array of npm module names that contain a "bundle" of definitions rather than a single definition. An npm "bundle" module then must export a `resolutionBundle` array which contains the names of the resolution modules it defines. The actual definitions live in `lib/modules/module-one/index.js`, `lib/modules/module-two/index.js`, etc. *within the bundle npm module*. `resolution` will find these automatically and will consider these first before requiring normally from npm.
+
+Here's an example:
+
+```javascript
+// In node_modules/mybundle/index.js
+
+module.exports = {
+  resolutionBundle: [ 'module-one', 'module-two' ]
+};
+
+// In node_modules/mybundle/lib/modules/module-one/index.js
+
+module.exports = {
+  construct: function(self, options) { ... }
+};
+
+// In node_modules/mybundle/lib/modules/module-two/index.js
+
+module.exports = {
+  construct: function(self, options) { ... }
+};
+```
+
+```javascript
+// In our application
+
+var resolver = require('resolution')({
+  bundles: [ 'mybundle' ],
+  localModules: __dirname + '/lib/modules',
+  defaultBaseClass: 'module',
+  definitions: {
+    'module-one': {},
+    'module-two': {}
+  }
+});
+```
+
+Note that just as before, we must include these modules in our project-level definitions if we want to instantiate them with `createAll`, although we don't have to override any properties. If we just want to use `create`, we can skip that step.
+

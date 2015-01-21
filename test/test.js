@@ -39,6 +39,7 @@ describe('resolution', function() {
       resolver.create('testModule', {}, function(err, testModule) {
         assert(!err);
         assert(testModule);
+        assert(testModule._options.color === 'blue');
         return done();
       });
     });

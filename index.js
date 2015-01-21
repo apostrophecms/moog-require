@@ -119,18 +119,23 @@ module.exports = function(options) {
       } else {
         // Implicit subclassing
 
+        console.log('implicit');
+        console.log(definition);
         // If this is not from npm, and has the same name as an
         // available npm module, implicitly extend that module,
         // and make our module name unique
         var name = definition.__name;
         if ((!definition.__npm) && getNpmPath(self.root.filename, name)) {
+          console.log('exists in npm');
           definition.__name = 'my-' + name;
           definition.extend = resolve(name, true);
         } else if (self.options.defaultBaseClass && (definition.__name !== self.options.defaultBaseClass)) {
+          console.log('extends default base class');
           // If there is a default base class, and we're not it,
           // implicitly extend that base class
           definition.extend = resolve(self.options.defaultBaseClass);
         } else {
+          console.log('extends nothing much');
           // We don't extend anything, which is OK too
         }
       }
@@ -147,6 +152,8 @@ module.exports = function(options) {
         steps.push(next);
         next = next.extend;
       }
+
+      console.log(steps);
 
       return async.series({
         beforeConstruct: function(callback) {
@@ -213,7 +220,23 @@ module.exports = function(options) {
   };
 
   self.createAll = function(globalOptions, specificOptions, callback) {
-    return async.eachSeries(_.keys(options.definitions), self.create, callback);
+    var result = {};
+    return async.eachSeries(
+      _.keys(options.definitions),
+      function(name, callback) {
+        var options = {};
+        _.extend(options, globalOptions);
+        _.extend(options, specificOptions);
+        return self.create(name, options, function(err, obj) {
+          if (err) {
+            return callback(err);
+          }
+          result[name] = obj;
+          return callback(null);
+        });
+      },
+      callback
+    );
   };
 
   self.bridge = function(modules) {

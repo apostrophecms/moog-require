@@ -120,7 +120,7 @@ describe('resolution', function() {
         root: module,
         definitions: {
           'myTestModule': {
-            extend: 'testModuleTwo',
+            extend: 'testModuleLocalOnly',
             newProperty: 42
           }
         }
@@ -129,7 +129,7 @@ describe('resolution', function() {
       resolver.create('myTestModule', {}, function(err, myTestModule) {
         assert(!err);
         assert(myTestModule);
-        assert(myTestModule._options.color === 'blue');
+        assert(myTestModule._options.color === 'purple');
         assert(myTestModule._options.newProperty === 42);
         return done();
       });

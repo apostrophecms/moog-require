@@ -1,5 +1,5 @@
 module.exports = {
-  age: 70,
+  color: 'purple',
   construct: function(self, options) {
     self._options = options;
   }

@@ -18,13 +18,21 @@ module.exports = function(options) {
   }
 
   if (self.option.bundles) {
-    _.each(self.option.bundles, function(bundle) {
-      var bundle = getNpmPath(self.root.filename, bundle);
-      if (!bundle) {
-        throw 'The configured bundle ' + bundle + ' was not found in npm.';
+    _.each(self.option.bundles, function(bundleName) {
+      var bundlePath = getNpmPath(self.root.filename, bundleName);
+      if (!bundlePath) {
+        throw 'The configured bundle ' + bundleName + ' was not found in npm.';
       }
-      _.each(bundle.resolutionBundle, function(name) {
-        self.bundled[name] = bundle + '/lib/modules/' + name + '/index.js';
+      var bundle = require(bundlePath);
+      if (!bundle.resolutionBundle) {
+        throw 'The configured bundle ' + bundleName + ' does not export a resolutionBundle property.';
+      }
+      var modules = bundle.resolutionBundle.modules;
+      if (!modules) {
+        throw 'The configured bundle ' + bundleName + ' does not have a "modules" property within its "resolutionBundle" property.';
+      }
+      _.each(modules, function(name) {
+        self.bundled[name] = path.normalize(bundlePath + '/' + bundle.resolutionBundle.directory + '/' + name + '/index.js');
       });
     });
   }

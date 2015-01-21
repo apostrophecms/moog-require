@@ -208,7 +208,10 @@ Here's an example:
 // In node_modules/mybundle/index.js
 
 module.exports = {
-  resolutionBundle: [ 'module-one', 'module-two' ]
+  resolutionBundle: {
+    modules: [ 'module-one', 'module-two' ],
+    directory: 'lib/modules'
+  }
 };
 
 // In node_modules/mybundle/lib/modules/module-one/index.js

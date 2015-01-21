@@ -219,7 +219,9 @@ module.exports = function(options) {
       function(name, callback) {
         var options = {};
         _.extend(options, globalOptions);
-        _.extend(options, specificOptions);
+        if (_.has(specificOptions, name)) {
+          _.extend(options, specificOptions[name]);
+        }
         return self.create(name, options, function(err, obj) {
           if (err) {
             return callback(err);
@@ -228,7 +230,12 @@ module.exports = function(options) {
           return callback(null);
         });
       },
-      callback
+      function(err) {
+        if (err) {
+          return callback(err);
+        }
+        return callback(null, result);
+      }
     );
   };
 

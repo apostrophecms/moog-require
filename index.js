@@ -17,14 +17,6 @@ module.exports = function(options) {
 
   self.create = function(type, options, callback) {
 
-    // You can't create an instance of something that
-    // is not present in your definitions (you can't
-    // create an instance of an abstract base class)
-
-    if (!self.options.definitions[type]) {
-      return callback(new Error('unconfigured module type: ' + type));
-    }
-
     var definition = resolve(type);
 
     return instantiate(definition, options, callback);
@@ -76,7 +68,7 @@ module.exports = function(options) {
         npmDefinition.__npm = true;
         npmDefinition.__dirname = path.dirname(npmPath);
         npmDefinition.__filename = npmPath;
-        npmDefinition.name = type;
+        npmDefinition.__name = type;
         if (definition) {
           definition.extend = npmDefinition;
           resolveExtend(npmDefinition);
@@ -89,6 +81,8 @@ module.exports = function(options) {
         return callback(new Error('No such type is defined, in app.js, project-level modules or npm: ' + type));
       }
 
+      definition.__name = type;
+
       resolveExtend(definition);
 
       self.resolved[type] = definition;
@@ -97,6 +91,7 @@ module.exports = function(options) {
     }
 
     function getNpmPath(parentPath, type) {
+      console.log(type);
       try {
         return npmResolve.sync(type, { basedir: path.dirname(parentPath) });
       } catch (e) {

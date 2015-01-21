@@ -39,6 +39,7 @@ describe('resolution', function() {
       resolver.create('testModule', {}, function(err, testModule) {
         assert(!err);
         assert(testModule);
+        assert(testModule._options.color === 'blue');
         return done();
       });
     });
@@ -333,7 +334,7 @@ describe('resolution', function() {
       resolver.createAll({ }, { }, function(err, modules) {
         assert(!err);
         assert(modules.newModule);
-        assert(modules.newModule._options.color === 'red');
+        assert(modules.newModule._options.color === 'blue');
         return done();
       });
     });

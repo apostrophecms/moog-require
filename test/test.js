@@ -350,6 +350,38 @@ describe('resolution', function() {
         return done();
       });
     });
+
+    it('should accept a synchronous `beforeConstruct` method', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testModule': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.testModule);
+        return done();
+      });
+    });
+
+    it('should accept an asynchronous `beforeConstruct` method', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'testBeforeConstructAsync': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.testBeforeConstructAsync);
+        return done();
+      });
+    });
   });
 
 });

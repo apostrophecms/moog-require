@@ -14,11 +14,14 @@
 * Optional default base class for all modules
 * "self" is always provided, methods are always instance methods: no confusion about the scope of `this`, ever
 
+While `resolution` is mainly used to subclass singleton manager objects, there is no restriction on creating multiple instances. Raw performance when constructing new objects is not our first priority. But it's certainly fast enough to create, let's say, a "widget editor" each time you need one. Just don't expect it to be as fast as raw prototype-based constructors.
+
 ## Example
 
 ```javascript
 
 // IMPLICIT BASE CLASS OF ALL MODULES
+// (if configured - see app.js below)
 //
 // In node_modules/module/index.js
 
@@ -175,12 +178,13 @@ If you want to write this:
 `extend': require('./lib/weird-place/my-module/index.js')
 ```
 
-You may do so, but in that case your module must export its `__name` and its `__dirname`, like so:
+You may do so, but in that case your module must export its `__name`, `__dirname` and `__filename`, like so:
 
 ```javascript
 module.exports = {
   __name: 'my-module',
   __dirname: __dirname,
+  __filename: __filename,
   construct: function(self, options) { ... }
 };
 ```

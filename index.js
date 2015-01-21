@@ -171,7 +171,11 @@ module.exports = function(options) {
             if (beforeConstruct.length === 2) {
               var syncBeforeConstruct = beforeConstruct;
               beforeConstruct = function(self, options, callback) {
-                syncBeforeConstruct(self, options);
+                try {
+                  syncBeforeConstruct(self, options);
+                } catch (e) {
+                  return setImmediate(_.partial(callback, e));
+                }
                 return setImmediate(callback);
               };
             }
@@ -193,7 +197,11 @@ module.exports = function(options) {
             if (construct.length === 2) {
               var syncConstruct = construct;
               construct = function(self, options, callback) {
-                syncConstruct(self, options);
+                try {
+                  syncConstruct(self, options);
+                } catch (e) {
+                  return setImmediate(_.partial(callback, e));
+                }
                 return setImmediate(callback);
               };
             }

@@ -79,7 +79,7 @@ module.exports = {
 
 // in app.js
 
-var resolver = require('apostrophe-resolve')({
+var resolver = require('resolution')({
   localModules: __dirname + '/lib/modules',
   defaultBaseClass: 'module',
   definitions: {
@@ -145,7 +145,10 @@ var resolver = require('apostrophe-resolve')({
 });
 
 // Instantiate all the modules, passing in some
-// universal options that are provided to all of them
+// universal options that are provided to all of them. This
+// only instantiates modules mentioned in `definitions`, but
+// they may override or subclass modules in npm or the
+// project-level modules folder
 
 return resolver.createAll({ mailer: myMailer }, function(err, modules) {
   return modules.events.get({ ... }, function(err, events) {
@@ -197,7 +200,7 @@ Sometimes several modules are conceptually distinct, but are developed and versi
 
 The difficulty of course is that the link between npm module names and resolution module names is broken when we do this. So we need another way to indicate to resolution that it should look in the appropriate place.
 
-Since searching for "X", where X is actually provided by module "Y", is not a core feature of npm, we have kept this mechanism simple: you can give resolution an array of npm module names that contain a "bundle" of definitions rather than a single definition. This bundle must be exported as the "modules" property. `resolution` will consider these first before requiring normally from npm.
+Since searching for "X", where X is actually provided by module "Y", is not a core feature of npm itself we have kept this mechanism simple: you can give `resolution` an array of npm module names that contain a "bundle" of definitions rather than a single definition. An npm "bundle" module then must export a `resolutionBundle` array which contains the names of the resolution modules it defines. The actual definitions live in `lib/modules/module-one/index.js`, `lib/modules/module-two/index.js`, etc. *within the bundle npm module*. `resolution` will find these automatically and will consider these first before requiring normally from npm.
 
 Here's an example:
 
@@ -205,22 +208,27 @@ Here's an example:
 // In node_modules/mybundle/index.js
 
 module.exports = {
-  modules: {
-    'module-one': {
-      ... definition ...
-    },
-    'module-two': {
-      ... definition ...
-    }
-  }
-}
+  resolutionBundle: [ 'module-one', 'module-two' ]
+};
+
+// In node_modules/mybundle/lib/modules/module-one/index.js
+
+module.exports = {
+  construct: function(self, options) { ... }
+};
+
+// In node_modules/mybundle/lib/modules/module-two/index.js
+
+module.exports = {
+  construct: function(self, options) { ... }
+};
 ```
 
 ```javascript
 // In our application
 
-var resolver = require('apostrophe-resolve')({
-  npmBundles: [ 'mybundle' ],
+var resolver = require('resolution')({
+  bundles: [ 'mybundle' ],
   localModules: __dirname + '/lib/modules',
   defaultBaseClass: 'module',
   definitions: {
@@ -231,3 +239,4 @@ var resolver = require('apostrophe-resolve')({
 ```
 
 Note that just as before, we must include these modules in our project-level definitions if we want to instantiate them with `createAll`, although we don't have to override any properties. If we just want to use `create`, we can skip that step.
+

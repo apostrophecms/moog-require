@@ -318,21 +318,35 @@ describe('resolution', function() {
     });
   });
 
-  describe('module pattern', function() {
+  describe('module structure', function() {
     it('should accept a synchronous `construct` method', function(done) {
       var resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
         root: module,
         definitions: {
-          'testModule': { },
+          'testModule': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(!err);
+        assert(modules.testModule);
+        return done();
+      });
+    });
+
+    it('should accept an asynchronous `construct` method', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
           'testModuleTwo': { }
         }
       });
 
       resolver.createAll({ }, { }, function(err, modules) {
         assert(!err);
-        assert(modules.length);
-        resolver.bridge(modules);
+        assert(modules.testModuleTwo);
         return done();
       });
     });

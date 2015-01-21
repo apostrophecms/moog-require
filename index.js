@@ -10,9 +10,23 @@ module.exports = function(options) {
 
   self.options = options;
   self.resolved = {};
+  self.bundled = {};
   self.root = options.root;
+
   if (!self.root) {
     throw 'The root option is required. Pass the node variable "module" as root. This allows resolution to require modules on your behalf.';
+  }
+
+  if (self.option.bundles) {
+    _.each(self.option.bundles, function(bundle) {
+      var bundle = getNpmPath(self.root.filename, bundle);
+      if (!bundle) {
+        throw 'The configured bundle ' + bundle + ' was not found in npm.';
+      }
+      _.each(bundle.resolutionBundle, function(name) {
+        self.bundled[name] = bundle + '/lib/modules/' + name + '/index.js';
+      });
+    });
   }
 
   self.create = function(type, options, callback) {
@@ -91,7 +105,9 @@ module.exports = function(options) {
     }
 
     function getNpmPath(parentPath, type) {
-      console.log(type);
+      if (_.has(self.bundled, type)) {
+        return self.bundled[type];
+      }
       try {
         return npmResolve.sync(type, { basedir: path.dirname(parentPath) });
       } catch (e) {

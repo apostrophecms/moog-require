@@ -319,6 +319,11 @@ describe('resolution', function() {
   });
 
   describe('module structure', function() {
+
+    // =================================================================
+    // PASSING
+    // =================================================================
+
     it('should accept a synchronous `construct` method', function(done) {
       var resolver = require('../index.js')({
         localModules: __dirname + '/project_modules',
@@ -379,6 +384,74 @@ describe('resolution', function() {
       resolver.createAll({ }, { }, function(err, modules) {
         assert(!err);
         assert(modules.testBeforeConstructAsync);
+        return done();
+      });
+    });
+
+    // =================================================================
+    // FAILING
+    // =================================================================
+
+    it('should catch a synchronous Error during `construct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'failingModuleSync': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(err);
+        assert(err.message === 'I have failed.');
+        return done();
+      });
+    });
+
+    it('should catch an asynchronous Error during `construct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'failingModuleAsync': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(err);
+        assert(err.message === 'I have failed.');
+        return done();
+      });
+    });
+
+    it('should catch a synchronous Error during `beforeConstruct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'failingBeforeConstructSync': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(err);
+        assert(err.message === 'I have failed.');
+        return done();
+      });
+    });
+
+    it('should catch an asynchronous Error during `beforeConstruct`', function(done) {
+      var resolver = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        definitions: {
+          'failingBeforeConstructAsync': { }
+        }
+      });
+
+      resolver.createAll({ }, { }, function(err, modules) {
+        assert(err);
+        assert(err.message === 'I have failed.');
         return done();
       });
     });

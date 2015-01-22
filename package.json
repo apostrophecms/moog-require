@@ -1,7 +1,7 @@
 {
-  "name": "resolution",
+  "name": "moog-require",
   "version": "0.0.1",
-  "description": "Resolution provides powerful module subclassing.",
+  "description": "moog-require extends moog with support for type definitions in local files and npm modules.",
   "main": "index.js",
   "dependencies": {
     "async": "^0.9.0",
@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/punkave/resolution"
+    "url": "git://github.com/punkave/moog-require"
   },
   "keywords": [
     "apostrophe",

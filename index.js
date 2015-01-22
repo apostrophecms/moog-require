@@ -11,6 +11,8 @@ module.exports = function(options) {
     throw 'The root option is required. Pass the node variable "module" as root. This allows moog to require modules on your behalf.';
   }
 
+  self.root = self.options.root;
+
   self.bundled = {};
 
   if (self.options.bundles) {
@@ -34,7 +36,13 @@ module.exports = function(options) {
   }
 
   var superDefine = self.define;
-  self.define = function(type, definition) {
+  self.define = function(type, definition, extending) {
+
+    // For the define-many-at-once case let the base class do the work
+    if (typeof(type) === 'object') {
+      return superDefine(type);
+    }
+
     var projectLevelDefinition;
     var npmDefinition;
 
@@ -43,6 +51,13 @@ module.exports = function(options) {
     projectLevelPath = path.normalize(projectLevelPath);
     if (fs.existsSync(projectLevelPath)) {
       projectLevelDefinition = self.root.require(projectLevelPath);
+    }
+
+    var relativeTo;
+    if (extending) {
+      relativeTo = extending.__meta.filename;
+    } else {
+      relativeTo = self.root.filename;
     }
 
     var npmPath = getNpmPath(relativeTo, type);
@@ -56,7 +71,7 @@ module.exports = function(options) {
       };
     }
 
-    if (!(definition || localDefinition || npmDefinition)) {
+    if (!(definition || projectLevelDefinition || npmDefinition)) {
       // Can't find it nohow. Use the standard undefined type error message
       return superDefine(type);
     }
@@ -64,24 +79,23 @@ module.exports = function(options) {
     if (!definition) {
       definition = {};
     }
-    definition.__meta = definition.__meta || {};
 
-    if (!projectLevelDefinition) {
-      projectLevelDefinition = {};
-    }
-
-    projectLevelDefinition.__meta.dirname = path.dirname(projectLevelPath);
-    projectLevelDefinition.__meta.filename = projectLevelFile;
+    projectLevelDefinition = projectLevelDefinition || {};
+    projectLevelDefinition.__meta = {
+      dirname: path.dirname(projectLevelPath),
+      filename: projectLevelPath
+    };
 
     _.defaults(definition, projectLevelDefinition);
 
-    // Call twice so that the local definition becomes
-    // an implicit subclass. This allows local template overrides
+    // Insert the npm definition as a defined type, then let the
+    // base class define the local definition normally. This results
+    // in an implicit base class, allowing local template overrides
     // even if there is no other local code
     if (npmDefinition) {
       superDefine(type, npmDefinition);
     }
-    superDefine(type, definition);
+    return superDefine(type, definition);
   };
 
   function getNpmPath(parentPath, type) {

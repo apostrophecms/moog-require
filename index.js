@@ -5,6 +5,7 @@ var npmResolve = require('resolve');
 var path = require('path');
 
 module.exports = function(options) {
+
   var self = require('moog')(options);
 
   if (!self.options.root) {

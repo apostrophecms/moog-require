@@ -1,21 +1,15 @@
-[![Build Status](https://travis-ci.org/punkave/resolution.svg?branch=master)](https://travis-ci.org/punkave/resolution)
+[![Build Status](https://travis-ci.org/punkave/moog-require.svg?branch=master)](https://travis-ci.org/punkave/moog-require)
 
-# resolution
+# moog-require
 
-`resolution` provides powerful module subclassing. Features include:
+`moog-require` provides powerful module subclassing for server-side development. It extends the features of [moog](https://github.com/punkave/moog) with the following additions:
 
-* Implicit `require` of base classes from project level, or from npm
-* Implicit subclassing at project level to do simple overrides and also change the behavior of all subclasses
-* Explicit subclassing at project or npm level
-* Access to "asset chain" of subclass module directories and type names, to implement template overrides and the like
-* Synchronous or asynchronous constructors in any combination
-* Easy declaration of default options
-* `beforeConstruct` mechanism for advanced manipulation of options
-* Optional default base class for all modules
-* "self" is always provided, methods are always instance methods: no confusion about the scope of `this`, ever
-* Defining multiple resolution "modules" from a single npm module
-
-While `resolution` is mainly used to subclass singleton manager objects, there is no restriction on creating multiple instances. Raw performance when constructing new objects is not our first priority. But it's certainly fast enough to create, let's say, a "widget editor" each time you need one. Just don't expect it to be as fast as raw prototype-based constructors.
+* Fetches modules from a local modules folder if they are not defined explicitly
+* If a module is defined explicitly and also exists in localModules, the local modules folder becomes a source of defaults for properties not defined explicitly
+* Fetches modules from npm if they are not defined either explicitly or via the local modules folder
+* If a module exists by the same name both in npm and via explicit definition or local modules, automatically extends the npm module without the need for a new name (like the "category" feature of Objective C)
+* Provides access to an "asset chain" of subclass module directories and type names, to implement template overrides and the like
+* Also supports bundling moog modules in a single npm module, if explicitly configured
 
 ## Example
 
@@ -79,7 +73,7 @@ module.exports = {
 
 // in app.js
 
-var resolver = require('resolution')({
+var resolver = require('moog-require')({
   localModules: __dirname + '/lib/modules',
   defaultBaseClass: 'module',
   definitions: {
@@ -194,13 +188,13 @@ module.exports = {
 
 This is only necessary if you are using `require` directly. Most of the time, you will be happier if you just specify a module name and let us `require` it for you. This even works in npm modules. (Yes, it will still find it if it is an npm dependency of your own module.)
 
-## Packaging multiple resolution modules in a single npm module
+## Packaging multiple moog-require modules in a single npm module
 
 Sometimes several modules are conceptually distinct, but are developed and versioned in tandem. In these cases there is no benefit from separate packaging, just a significant delay in `npm install`. npm peer dependencies are one way to handle this, but [npm peer dependencies may be on the chopping block](http://dailyjs.com/2014/04/16/node-roundup/), and they are significantly slower than pre-packaging modules together.
 
-The difficulty of course is that the link between npm module names and resolution module names is broken when we do this. So we need another way to indicate to resolution that it should look in the appropriate place.
+The difficulty of course is that the link between npm module names and moog-require module names is broken when we do this. So we need another way to indicate to moog-require that it should look in the appropriate place.
 
-Since searching for "X", where X is actually provided by module "Y", is not a core feature of npm itself we have kept this mechanism simple: you can give `resolution` an array of npm module names that contain a "bundle" of definitions rather than a single definition. An npm "bundle" module then must export a `resolutionBundle` array which contains the names of the resolution modules it defines. The actual definitions live in `lib/modules/module-one/index.js`, `lib/modules/module-two/index.js`, etc. *within the bundle npm module*. `resolution` will find these automatically and will consider these first before requiring normally from npm.
+Since searching for "X", where X is actually provided by module "Y", is not a core feature of npm itself we have kept this mechanism simple: you can give `moog-require` an array of npm module names that contain a "bundle" of definitions rather than a single definition. An npm "bundle" module then must export a `moogBundle` array property which contains the names of the moog-require modules it defines. The actual definitions live in `lib/modules/module-one/index.js`, `lib/modules/module-two/index.js`, etc. *within the bundle npm module*. `moog-require` will find these automatically and will consider these first before requiring normally from npm.
 
 Here's an example:
 
@@ -208,7 +202,7 @@ Here's an example:
 // In node_modules/mybundle/index.js
 
 module.exports = {
-  resolutionBundle: {
+  moogBundle: {
     modules: [ 'module-one', 'module-two' ],
     directory: 'lib/modules'
   }
@@ -230,7 +224,7 @@ module.exports = {
 ```javascript
 // In our application
 
-var resolver = require('resolution')({
+var resolver = require('moog-require')({
   bundles: [ 'mybundle' ],
   localModules: __dirname + '/lib/modules',
   defaultBaseClass: 'module',
@@ -241,5 +235,6 @@ var resolver = require('resolution')({
 });
 ```
 
-Note that just as before, we must include these modules in our project-level definitions if we want to instantiate them with `createAll`, although we don't have to override any properties. If we just want to use `create`, we can skip that step.
+Note that just as before, we must include these modules in our explicit `definitions` option or specify them with `define` calls if we want to instantiate them with `createAll`, although we don't have to override any properties; we can pass empty objects to just use the defaults defined in the project level folder, and/or implicitly inherit from npm.
 
+However, you may explicitly `create` a type that exists only in the project level folder and/or npm.

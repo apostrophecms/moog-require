@@ -96,5 +96,7 @@ module.exports = function(options) {
       return null;
     }
   }
+
+  return self;
 };
 

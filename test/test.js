@@ -714,27 +714,27 @@ describe('moog', function() {
     });
   });
 
-  // describe('error handling', function() {
-  //   it('should prevent cyclical module definitions', function(done) {
-  //     var synth = require('../index.js')({
-  //       localModules: __dirname + '/project_modules',
-  //       root: module
-  //     });
+  describe('error handling', function() {
+    it('should prevent cyclical module definitions', function(done) {
+      var synth = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module
+      });
 
-  //     synth.define({
-  //       'myNewModuleOne': {
-  //         extend: 'myNewModuleTwo'
-  //       },
-  //       'myNewModuleTwo': {
-  //         extend: 'myNewModuleOne'
-  //       }
-  //     });
+      synth.define({
+        'myNewModuleOne': {
+          extend: 'myNewModuleTwo'
+        },
+        'myNewModuleTwo': {
+          extend: 'myNewModuleOne'
+        }
+      });
 
-  //     synth.createAll({ }, { }, function(err, modules) {
-  //       assert(err);
-  //       return done();
-  //     });
-  //   });
-  // });
+      synth.createAll({ }, { }, function(err, modules) {
+        assert(err);
+        return done();
+      });
+    });
+  });
 
 });

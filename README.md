@@ -24,9 +24,9 @@ module.exports = {
   self.construct = function(self, options) {
     self.renderTemplate = function(name, data) {
       var i;
-      for (i = 0; (i < options._directories.length); i++) {
-        var directory = options._directories[i];
-        var path = directory.dirname + '/views/' + directory.name + '.html';
+      for (i = 0; (i < options.__meta.length); i++) {
+        var meta = options.__meta[i];
+        var path = meta.dirname + '/views/' + name + '.html';
         if (fs.existsSync(path)) {
           // Deepest subclass wins
           return templateEngine.render(path, data);
@@ -73,67 +73,68 @@ module.exports = {
 
 // in app.js
 
-var resolver = require('moog-require')({
+var synth = require('moog-require')({
   localModules: __dirname + '/lib/modules',
-  defaultBaseClass: 'module',
-  definitions: {
+  defaultBaseClass: 'module'
+});
 
-    // SETTING A DEFAULT OPTION THAT APPLIES TO *ALL* MODULES
-    // (because we're setting it for the defaultBaseClass)
-    'module': {
-      color: 'gray'
+synth.define({
+
+  // SETTING A DEFAULT OPTION THAT APPLIES TO *ALL* MODULES
+  // (because we're setting it for the defaultBaseClass)
+  'module': {
+    color: 'gray'
+  },
+
+  // CONFIGURATION (IMPLICIT SUBCLASS) OF A PROJECT-LEVEL MODULE
+  // (same technique works to configure an npm module)
+
+  'events': {
+    color: 'blue',
+    // More overrides in lib/modules/events/index.js (above).
+    // Anything here in app.js wins
+  },
+
+  // EXTENDING A PROJECT-LEVEL MODULE TO CREATE A NEW ONE
+  'parties': {
+
+    // Let's subclass a module right here in app.js (usually we'd just
+    // set site-specific options here and put code in
+    // lib/modules/parties/index.js, but you're not restricted)
+
+    extend: 'events',
+    color: 'lavender',
+
+    // Let's alter the "tags" option before the
+    // base class constructors are aware of it
+
+    beforeConstruct: function(self, options) {
+      options.tags = (options.tags || []).concat('party');
     },
 
-    // CONFIGURATION (IMPLICIT SUBCLASS) OF A PROJECT-LEVEL MODULE
-    // (same technique works to configure an npm module)
+    // This constructor can take a callback, even though
+    // the base classes don't. You can mix and match
 
-    'events': {
-      color: 'blue',
-      // More overrides in lib/modules/events/index.js (above).
-      // Anything here in app.js wins
+    construct: function(self, options, callback) {
+      // options.color will be lavender
+      var superGet = self.get;
+      self.get = function(params, callback) {
+        // override: only interested in parties. Let's
+        // assume the base class uses this as a query
+        params.title = /party/i;
+        return superGet(params, callback);
+      };
+
+      // Output names and full folder paths of all modules in the
+      // subclassing chain; we can use this to push assets and
+      // implement template overrides
+      console.log(options._directories);
     },
 
-    // EXTENDING A PROJECT-LEVEL MODULE TO CREATE A NEW ONE
-    'parties': {
-
-      // Let's subclass a module right here in app.js (usually we'd just
-      // set site-specific options here and put code in
-      // lib/modules/parties/index.js, but you're not restricted)
-
-      extend: 'events',
-      color: 'lavender',
-
-      // Let's alter the "tags" option before the
-      // base class constructors are aware of it
-
-      beforeConstruct: function(self, options) {
-        options.tags = (options.tags || []).concat('party');
-      },
-
-      // This constructor can take a callback, even though
-      // the base classes don't. You can mix and match
-
-      construct: function(self, options, callback) {
-        // options.color will be lavender
-        var superGet = self.get;
-        self.get = function(params, callback) {
-          // override: only interested in parties. Let's
-          // assume the base class uses this as a query
-          params.title = /party/i;
-          return superGet(params, callback);
-        };
-
-        // Output names and full folder paths of all modules in the
-        // subclassing chain; we can use this to push assets and
-        // implement template overrides
-        console.log(options._directories);
-      },
-
-      setBridge: function(modules) {
-        // Do something that requires access to the
-        // other modules, which are properties of
-        // the modules object
-      }
+    setBridge: function(modules) {
+      // Do something that requires access to the
+      // other modules, which are properties of
+      // the modules object
     }
   }
 });
@@ -144,7 +145,7 @@ var resolver = require('moog-require')({
 // they may override or subclass modules in npm or the
 // project-level modules folder
 
-return resolver.createAll({ mailer: myMailer }, function(err, modules) {
+return synth.createAll({ mailer: myMailer }, function(err, modules) {
   return modules.events.get({ ... }, function(err, events) {
     ...
   });
@@ -154,7 +155,7 @@ return resolver.createAll({ mailer: myMailer }, function(err, modules) {
 // invokes the setBridge method of each module, if any,
 // and passes the modules object to it
 
-resolver.bridge(modules);
+synth.bridge(modules);
 
 // We can also create an instance of any module at any time,
 // and pass it additional options. This is useful if you are
@@ -162,12 +163,16 @@ resolver.bridge(modules);
 // killer performance if you create thousands of objects
 // per second
 
-return resolver.create('parties', { color: 'purple' }, function(err, party) {
+return synth.create('parties', { color: 'purple' }, function(err, party) {
   ...
 });
 ```
 
 ## Calling `require` yourself
+
+Don't.
+
+Well, okay...
 
 If you want to write this:
 
@@ -224,17 +229,18 @@ module.exports = {
 ```javascript
 // In our application
 
-var resolver = require('moog-require')({
+var synth = require('moog-require')({
   bundles: [ 'mybundle' ],
   localModules: __dirname + '/lib/modules',
-  defaultBaseClass: 'module',
-  definitions: {
-    'module-one': {},
-    'module-two': {}
-  }
+  defaultBaseClass: 'module'
+});
+
+synth.define({
+  'module-one': {},
+  'module-two': {}
 });
 ```
 
-Note that just as before, we must include these modules in our explicit `definitions` option or specify them with `define` calls if we want to instantiate them with `createAll`, although we don't have to override any properties; we can pass empty objects to just use the defaults defined in the project level folder, and/or implicitly inherit from npm.
+Note that just as before, we must include these modules in our explicit `define` calls if we want to instantiate them with `createAll`, although we don't have to override any properties; we can pass empty objects to just use the defaults defined in the project level folder, and/or implicitly inherit from npm.
 
 However, you may explicitly `create` a type that exists only in the project level folder and/or npm.

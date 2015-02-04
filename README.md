@@ -244,3 +244,8 @@ synth.define({
 Note that just as before, we must include these modules in our explicit `define` calls if we want to instantiate them with `createAll`, although we don't have to override any properties; we can pass empty objects to just use the defaults defined in the project level folder, and/or implicitly inherit from npm.
 
 However, you may explicitly `create` a type that exists only in the project level folder and/or npm.
+
+## Changelog
+
+0.1.0: compatible with `moog` 0.1.0 in which the `__meta` property became an object with `chain` and `name` properties.
+

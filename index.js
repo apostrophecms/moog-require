@@ -100,6 +100,7 @@ module.exports = function(options) {
   };
 
   function getNpmPath(parentPath, type) {
+    parentPath = path.resolve(parentPath);
     if (_.has(self.bundled, type)) {
       return self.bundled[type];
     }

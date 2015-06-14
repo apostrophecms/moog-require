@@ -247,5 +247,7 @@ However, you may explicitly `create` a type that exists only in the project leve
 
 ## Changelog
 
+0.2.0: depends on `moog` 0.2.0 which introduces the `mirror` method.
+
 0.1.0: compatible with `moog` 0.1.0 in which the `__meta` property became an object with `chain` and `name` properties.
 

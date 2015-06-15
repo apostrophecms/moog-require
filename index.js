@@ -70,6 +70,20 @@ module.exports = function(options) {
         filename: npmPath,
         name: type
       };
+      if (npmDefinition.improve) {
+        // Improve an existing type with an implicit subclass,
+        // rather than defining one under a new name
+        type = npmDefinition.improve;
+        // If necessary, start by autoloading the original type
+        if (!self.isDefined(type)) {
+          self.define(type);
+        }
+      } else if (npmDefinition.replace) {
+        // Replace an existing type with the one defined by
+        // this npm module
+        delete self.definitions[npmDefinition.replace];
+        type = npmDefinition.replace;
+      }
     }
 
     if (!(definition || projectLevelDefinition || npmDefinition)) {

@@ -738,4 +738,45 @@ describe('moog', function() {
     });
   });
 
+  describe('replace option', function() {
+    it('should substitute a replacement type when replace option is used', function() {
+      var synth = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module
+      });
+      synth.define('replaceTestOriginal');
+      synth.define('replaceTestReplacement');
+      var instance = synth.create('replaceTestOriginal', {});
+      assert(instance._options);
+      assert(!instance._options.color);
+      assert(instance._options.size === 'large');
+    });
+  });
+
+  describe('improve option', function() {
+    it('should substitute an implicit subclass when improve option is used', function() {
+      var synth = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module
+      });
+      synth.define('improveTestOriginal');
+      synth.define('improveTestReplacement');
+      var instance = synth.create('improveTestOriginal', {});
+      assert(instance._options);
+      assert(instance._options.color === 'red');
+      assert(instance._options.size === 'large');
+    });
+    it('should require the original for you if needed', function() {
+      var synth = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module
+      });
+      synth.define('improveTestReplacement');
+      var instance = synth.create('improveTestOriginal', {});
+      assert(instance._options);
+      assert(instance._options.color === 'red');
+      assert(instance._options.size === 'large');
+    });
+  });
+
 });

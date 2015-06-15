@@ -168,6 +168,96 @@ return synth.create('parties', { color: 'purple' }, function(err, party) {
 });
 ```
 
+## Replacing a module with another npm module
+
+The `monsters` npm module works great for most people, but you've created a superior replacement, `scary-monsters`. And you want people to be able to use it as a drop-in replacement, without changing code that refers to the `monsters` module.
+
+This is especially useful if you want other moog types that subclass `monsters` to automatically subclass `scary-monsters` instead.
+
+So the `index.js` of your `scary-monsters` npm module might look like:
+
+```javascript
+module.exports = {
+  replace: 'monsters',
+  construct: function(self, options) { ... }
+}
+```
+
+Note the `replace` property.
+
+Now, an application developer who wants to use `scary-monsters` instead of the usual `monsters` module can simply configure it instead of `monsters`. The type name `monsters` will still be defined. The type name `scary-monsters` is **not** defined.
+
+```javascript
+var synth = require('moog-require')({
+  localModules: __dirname + '/lib/modules',
+  defaultBaseClass: 'module'
+});
+
+synth.define({
+  'scary-monsters`: { ... configuration ... }
+});
+
+// This works
+synth.create('monsters', {});
+
+// This does NOT work
+synth.create('scary-monsters', {});
+```
+
+Note that if you want to further extend `scary-monsters` at project level, you should use a `lib/modules/scary-monsters` folder. Anything in `lib/modules/monsters` will be ignored. Similarly, in `app.js`, don't configure `monsters`, just configure `scary-monsters`.
+
+## Improving a module with another npm module: implicit subclassing
+
+The `improve` property is similar to `replace`, but allows you to implicitly subclass an existing type rather than completely replacing it. If you `improve` the `monsters` type, all other code will regard your subclass as the `monsters` type.
+
+This is useful if you wish to release an npm module that subclasses a well-known module to add more functionality, without requiring developers to change the source code of other modules in order to use it.
+
+Here is an example:
+
+So the `index.js` of your `scary-monsters` npm module might look like:
+
+```javascript
+module.exports = {
+  improve: 'monsters',
+  construct: function(self, options) {
+    var superJump = self.jump;
+    self.jump = function(howHigh) {
+      // Limit height of jumps
+      if (howHigh > 100) {
+        howHigh = 100;
+      }
+      // Call original version
+      superJump(howHigh / 2);
+    };
+  }
+}
+```
+
+Note the `improve` property.
+
+Just like the `replace` option, the `improve` option defines the type with the name specified by `improve`. That is, your subclass is substituted everywhere for the `monsters` type. The `scary-monsters` type is **not** defined.
+
+Here is an example of application-level code:
+
+```javascript
+var synth = require('moog-require')({
+  localModules: __dirname + '/lib/modules',
+  defaultBaseClass: 'module'
+});
+
+synth.define({
+  'scary-monsters`: { ... configuration ... }
+});
+
+// This works
+synth.create('monsters', {});
+
+// This does NOT work
+synth.create('scary-monsters', {});
+```
+
+Note that if you want to further extend `scary-monsters` at project level, you should use a `lib/modules/scary-monsters` folder. Code in `lib/modules/monsters` will be loaded, but it will subclass the original `monsters` module, and then `scary-monsters` will subclass that. This is probably not what you want. Similarly, in `app.js`, don't configure `monsters`, just configure `scary-monsters`.
+
 ## Calling `require` yourself
 
 Don't.
@@ -246,6 +336,8 @@ Note that just as before, we must include these modules in our explicit `define`
 However, you may explicitly `create` a type that exists only in the project level folder and/or npm.
 
 ## Changelog
+
+0.3.0: introduced the `replace` and `improve` options, which allow an npm module to substitute itself for another moog type completely, or enhance it via implicit subclassing. This is useful when releasing a drop-in replacement for a well-known module.
 
 0.2.0: depends on `moog` 0.2.0 which introduces the `mirror` method.
 

@@ -194,7 +194,7 @@ var synth = require('moog-require')({
 });
 
 synth.define({
-  'scary-monsters`: { ... configuration ... }
+  'scary-monsters': { ... configuration ... }
 });
 
 // This works
@@ -246,7 +246,7 @@ var synth = require('moog-require')({
 });
 
 synth.define({
-  'scary-monsters`: { ... configuration ... }
+  'scary-monsters': { ... configuration ... }
 });
 
 // This works

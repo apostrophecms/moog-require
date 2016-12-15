@@ -337,6 +337,8 @@ However, you may explicitly `create` a type that exists only in the project leve
 
 ## Changelog
 
+0.4.0: added `isImprovement` method which returns true if a type name turned out to be an improvement of another type via the `improve` keyword. This is useful when you wish to instantiate all of the types except for those that are just improvements of others.
+
 0.3.0: introduced the `replace` and `improve` options, which allow an npm module to substitute itself for another moog type completely, or enhance it via implicit subclassing. This is useful when releasing a drop-in replacement for a well-known module.
 
 0.2.0: depends on `moog` 0.2.0 which introduces the `mirror` method.

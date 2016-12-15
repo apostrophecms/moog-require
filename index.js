@@ -15,6 +15,8 @@ module.exports = function(options) {
   self.root = self.options.root;
 
   self.bundled = {};
+  
+  self.improvements = {};
 
   if (self.options.bundles) {
     _.each(self.options.bundles, function(bundleName) {
@@ -39,6 +41,8 @@ module.exports = function(options) {
   var superDefine = self.define;
   self.define = function(type, definition, extending) {
 
+    var result;
+
     // For the define-many-at-once case let the base class do the work
     if (typeof(type) === 'object') {
       return superDefine(type);
@@ -46,6 +50,7 @@ module.exports = function(options) {
 
     var projectLevelDefinition;
     var npmDefinition;
+    var originalType;
 
     var projectLevelFolder = self.options.localModules + '/' + type;
     var projectLevelPath = projectLevelFolder + '/index.js';
@@ -71,11 +76,15 @@ module.exports = function(options) {
         name: type
       };
       if (npmDefinition.improve) {
+        // Remember which types were actually improvements of other types for
+        // the benefit of applications that would otherwise instantiate them all
+        self.improvements[type] = true;
         // Improve an existing type with an implicit subclass,
         // rather than defining one under a new name
+        originalType = type;
         type = npmDefinition.improve;
         // If necessary, start by autoloading the original type
-        if (!self.isDefined(type)) {
+        if (!self.isDefined(type, { autoload: false })) {
           self.define(type);
         }
       } else if (npmDefinition.replace) {
@@ -108,9 +117,20 @@ module.exports = function(options) {
     // in an implicit base class, allowing local template overrides
     // even if there is no other local code
     if (npmDefinition) {
-      superDefine(type, npmDefinition);
+      result = superDefine(type, npmDefinition);
+      if (npmDefinition.improve) {
+        // Restore the name of the improving module as otherwise our asset chains have
+        // multiple references to my-foo which is ambiguous
+        result.__meta.name = originalType;
+      }
     }
-    return superDefine(type, definition);
+    result = superDefine(type, definition);
+    if (npmDefinition && npmDefinition.improve) {
+      // Restore the name of the improving module as otherwise our asset chains have
+      // multiple references to my-foo which is ambiguous
+      result.__meta.name = 'my-' + originalType;
+    }
+    return result;
   };
 
   function getNpmPath(parentPath, type) {
@@ -126,6 +146,10 @@ module.exports = function(options) {
       return null;
     }
   }
+  
+  self.isImprovement = function(name) {
+    return _.has(self.improvements, name);
+  };
 
   return self;
 };

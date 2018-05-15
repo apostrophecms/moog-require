@@ -337,6 +337,8 @@ However, you may explicitly `create` a type that exists only in the project leve
 
 ## Changelog
 
+1.0.0: `moog`, `async` and `lodash` dependencies updated to satisfy `npm audit`. Declared 1.x as this has been a stable part of Apostrophe 2.x for a long time.
+
 0.4.1: fixed `moog` dependency to use the version that supports `autoload: false`.
 
 0.4.0: added `isImprovement` method which returns true if a type name turned out to be an improvement of another type via the `improve` keyword. This is useful when you wish to instantiate all of the types except for those that are just improvements of others.

@@ -5,7 +5,6 @@ var npmResolve = require('resolve');
 var path = require('path');
 
 module.exports = function(options) {
-
   var self = require('moog')(options);
 
   if (!self.options.root) {
@@ -53,6 +52,7 @@ module.exports = function(options) {
     var originalType;
 
     var projectLevelFolder = self.options.localModules + '/' + type;
+
     var projectLevelPath = projectLevelFolder + '/index.js';
     projectLevelPath = path.normalize(projectLevelPath);
     if (fs.existsSync(projectLevelPath)) {
@@ -68,7 +68,9 @@ module.exports = function(options) {
 
     var npmPath = getNpmPath(relativeTo, type);
     if (npmPath) {
-      npmDefinition = require(npmPath);
+      // Make a shallow clone so we can be part of multiple chains
+      // in multiple moog objects without leakage
+      npmDefinition = _.clone(require(npmPath));
       npmDefinition.__meta = {
         npm: true,
         dirname: path.dirname(npmPath),
@@ -104,7 +106,9 @@ module.exports = function(options) {
       definition = {};
     }
 
-    projectLevelDefinition = projectLevelDefinition || {};
+    // Make a shallow clone so we can be part of multiple chains
+    // in multiple moog objects without leakage
+    projectLevelDefinition = _.clone(projectLevelDefinition || {});
     projectLevelDefinition.__meta = {
       dirname: path.dirname(projectLevelPath),
       filename: projectLevelPath

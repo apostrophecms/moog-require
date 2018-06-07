@@ -337,6 +337,8 @@ However, you may explicitly `create` a type that exists only in the project leve
 
 ## Changelog
 
+1.0.1: shallowly clone the result of `require` rather than attaching `.__meta` to a potentially shared object. This allows multiple instances of `moog-require` in multiple instances of `apostrophe` to independently track where modules were loaded from.
+
 1.0.0: `moog`, `async` and `lodash` dependencies updated to satisfy `npm audit`. Declared 1.x as this has been a stable part of Apostrophe 2.x for a long time.
 
 0.4.1: fixed `moog` dependency to use the version that supports `autoload: false`.

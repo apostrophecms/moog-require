@@ -68,9 +68,9 @@ module.exports = function(options) {
 
     var npmPath = getNpmPath(relativeTo, type);
     if (npmPath) {
-    // Make a shallow clone so we can be part of multiple chains
-    // in multiple moog objects without leakage
-    npmDefinition = _.clone(require(npmPath));
+      // Make a shallow clone so we can be part of multiple chains
+      // in multiple moog objects without leakage
+      npmDefinition = _.clone(require(npmPath));
       npmDefinition.__meta = {
         npm: true,
         dirname: path.dirname(npmPath),

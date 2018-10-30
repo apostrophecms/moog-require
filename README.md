@@ -48,9 +48,9 @@ module.exports = {
 
     self.defaultTags = options.tags;
 
-    self.get = function(params, callback) {
-      // Go get some events
-      return callback(events);
+    self.get = async function(params) {
+      // Go get some events, then...
+      return events;
     };
   }
 }
@@ -63,10 +63,10 @@ module.exports = {
 
   construct: function(self, options) {
     var superGet = self.get;
-    self.get = function(params, callback) {
+    self.get = async function(params) {
       // override: only interested in upcoming events
       params.upcoming = true;
-      return superGet(params, callback);
+      return await superGet(params);
     };
   }
 };
@@ -78,99 +78,67 @@ var synth = require('moog-require')({
   defaultBaseClass: 'module'
 });
 
-synth.define({
+// SETTING A DEFAULT OPTION THAT APPLIES TO *ALL* MODULES
+// (because we're setting it for the defaultBaseClass)
+synth.define('module', {
+  color: 'gray'
+});
 
-  // SETTING A DEFAULT OPTION THAT APPLIES TO *ALL* MODULES
-  // (because we're setting it for the defaultBaseClass)
-  'module': {
-    color: 'gray'
+
+
+// CONFIGURATION (IMPLICIT SUBCLASS) OF A PROJECT-LEVEL MODULE
+// (same technique works to configure an npm module)
+synth.define('events', {
+  color: 'blue',
+  // More overrides in lib/modules/events/index.js (above).
+  // Anything here in app.js wins
+},
+
+// EXTENDING A PROJECT-LEVEL MODULE TO CREATE A NEW ONE
+synth.define('parties', {
+  // Let's subclass a module right here in app.js (usually we'd just
+  // set site-specific options here and put code in
+  // lib/modules/parties/index.js, but you're not restricted)
+
+  extend: 'events',
+  color: 'lavender',
+
+  // Let's alter the "tags" option before the
+  // base class constructors are aware of it
+
+  beforeConstruct: function(self, options) {
+    options.tags = (options.tags || []).concat('party');
   },
 
-  // CONFIGURATION (IMPLICIT SUBCLASS) OF A PROJECT-LEVEL MODULE
-  // (same technique works to configure an npm module)
+  // Could be async, or not
+  construct: function(self, options) {
+    // options.color will be lavender
+    var superGet = self.get;
+    self.get = function(params) {
+      // override: only interested in parties. Let's
+      // assume the base class uses this as a query
+      params.title = /party/i;
+      return superGet(params);
+    };
 
-  'events': {
-    color: 'blue',
-    // More overrides in lib/modules/events/index.js (above).
-    // Anything here in app.js wins
+    // Output names and full folder paths of all modules in the
+    // subclassing chain; we can use this to push assets and
+    // implement template overrides
+    console.log(options._directories);
   },
-
-  // EXTENDING A PROJECT-LEVEL MODULE TO CREATE A NEW ONE
-  'parties': {
-
-    // Let's subclass a module right here in app.js (usually we'd just
-    // set site-specific options here and put code in
-    // lib/modules/parties/index.js, but you're not restricted)
-
-    extend: 'events',
-    color: 'lavender',
-
-    // Let's alter the "tags" option before the
-    // base class constructors are aware of it
-
-    beforeConstruct: function(self, options) {
-      options.tags = (options.tags || []).concat('party');
-    },
-
-    // This constructor can take a callback, even though
-    // the base classes don't. You can mix and match
-
-    construct: function(self, options, callback) {
-      // options.color will be lavender
-      var superGet = self.get;
-      self.get = function(params, callback) {
-        // override: only interested in parties. Let's
-        // assume the base class uses this as a query
-        params.title = /party/i;
-        return superGet(params, callback);
-      };
-
-      // Output names and full folder paths of all modules in the
-      // subclassing chain; we can use this to push assets and
-      // implement template overrides
-      console.log(options._directories);
-    },
-
-    setBridge: function(modules) {
-      // Do something that requires access to the
-      // other modules, which are properties of
-      // the modules object
-    }
-  }
 });
 
-// Instantiate all the modules, passing in some
-// universal options that are provided to all of them. This
-// only instantiates modules mentioned in `definitions`, but
-// they may override or subclass modules in npm or the
-// project-level modules folder
+// We can create an instance of any module at any time,
+// and pass it additional options
 
-return synth.createAll({ mailer: myMailer }, function(err, modules) {
-  return modules.events.get({ ... }, function(err, events) {
-    ...
-  });
-});
-
-// We can also tell the modules about each other. This
-// invokes the setBridge method of each module, if any,
-// and passes the modules object to it
-
-synth.bridge(modules);
-
-// We can also create an instance of any module at any time,
-// and pass it additional options. This is useful if you are
-// not following the singleton pattern. We don't promise
-// killer performance if you create thousands of objects
-// per second
-
-return synth.create('parties', { color: 'purple' }, function(err, party) {
-  ...
-});
+const party = await synth.create('parties', { color: 'purple' });
 ```
+
+As noted in the moog documentation, `beforeConstruct`, `construct` and `afterConstruct` can all be `async` functions.
 
 ## Replacing a module with another npm module
 
-The `monsters` npm module works great for most people, but you've created a superior replacement, `scary-monsters`. And you want people to be able to use it as a drop-in replacement, without changing code that refers to the `monsters` module.
+The `monsters` module works great for most people, but you've created a superior replacement, `scary-monsters`. And you want people to be able to use it as a drop-in replacement, without changing code that refers to the `monsters` module.
 
 This is especially useful if you want other moog types that subclass `monsters` to automatically subclass `scary-monsters` instead.
 
@@ -285,7 +253,7 @@ This is only necessary if you are using `require` directly. Most of the time, yo
 
 ## Packaging multiple moog-require modules in a single npm module
 
-Sometimes several modules are conceptually distinct, but are developed and versioned in tandem. In these cases there is no benefit from separate packaging, just a significant delay in `npm install`. npm peer dependencies are one way to handle this, but [npm peer dependencies may be on the chopping block](http://dailyjs.com/2014/04/16/node-roundup/), and they are significantly slower than pre-packaging modules together.
+Sometimes several modules are conceptually distinct, but are developed and versioned in tandem. In these cases there is no benefit from separate packaging, just a significant delay in `npm install`. npm peer dependencies are one way to handle this, but they are only advisory (they don't actually auto-install), and they are significantly slower than pre-packaging modules together.
 
 The difficulty of course is that the link between npm module names and moog-require module names is broken when we do this. So we need another way to indicate to moog-require that it should look in the appropriate place.
 
@@ -336,6 +304,8 @@ Note that just as before, we must include these modules in our explicit `define`
 However, you may explicitly `create` a type that exists only in the project level folder and/or npm.
 
 ## Changelog
+
+2.0.0: changes are exclusively to the documentation, to avoid mentioning callbacks, which went away in `moog` 2.0.0 in favor of `async`/`await`.
 
 1.0.1: shallowly clone the result of `require` rather than attaching `.__meta` to a potentially shared object. This allows multiple instances of `moog-require` in multiple instances of `apostrophe` to independently track where modules were loaded from.
 

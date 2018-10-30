@@ -335,7 +335,20 @@ Note that just as before, we must include these modules in our explicit `define`
 
 However, you may explicitly `create` a type that exists only in the project level folder and/or npm.
 
+## Nesting modules in subdirectories
+
+For your convenience, `moog-require` has optional support for loading modules from nested subdirectories. The rules of the game are very simple:
+
+* You must set the `nestedModuleSubdirs` option to `true`.
+* Modules can now be found nested beneath your `localModules` folder, at any depth.
+* The names of the parent directories **do not matter**. They are purely for your organizational convenience.
+* The name of the actual module directory must still be the full name of the module.
+
+If the same module exists in two places, an exception is thrown.
+
 ## Changelog
+
+1.1.0: support for the `nestedModuleSubdirs` option.
 
 1.0.1: shallowly clone the result of `require` rather than attaching `.__meta` to a potentially shared object. This allows multiple instances of `moog-require` in multiple instances of `apostrophe` to independently track where modules were loaded from.
 

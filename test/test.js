@@ -779,4 +779,32 @@ describe('moog', function() {
     });
   });
 
+  describe('nestedModuleSubdirs option', function() {
+    it('should load a module from a regular folder without the nesting feature enabled', function() {
+      var synth = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module
+      });
+      synth.define('testModuleSimple');
+      var instance = synth.create('testModuleSimple', {});
+      assert(instance._options);
+      assert(instance._options.color === 'red');
+    });
+    it('should load a module from a nested or non-nested folder with the nesting option enabled', function() {
+      var synth = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        nestedModuleSubdirs: true,
+        root: module
+      });
+      synth.define('testModuleSimple');
+      var instance = synth.create('testModuleSimple', {});
+      assert(instance._options);
+      assert(instance._options.color === 'red');
+      synth.define('nestedModule');
+      var instance = synth.create('nestedModule', {});
+      assert(instance._options);
+      assert(instance._options.color === 'green');
+    });
+  });
+
 });

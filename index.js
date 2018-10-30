@@ -3,6 +3,7 @@ var _ = require('lodash');
 var fs = require('fs');
 var npmResolve = require('resolve');
 var path = require('path');
+var glob = require('glob');
 
 module.exports = function(options) {
   var self = require('moog')(options);
@@ -50,11 +51,15 @@ module.exports = function(options) {
     var projectLevelDefinition;
     var npmDefinition;
     var originalType;
+    var projectLevelPath = self.options.localModules + '/' + type + '/index.js';
 
-    var projectLevelFolder = self.options.localModules + '/' + type;
-
-    var projectLevelPath = projectLevelFolder + '/index.js';
-    projectLevelPath = path.normalize(projectLevelPath);
+    if (options.nestedModuleSubdirs) {
+      var matches = glob.sync(self.options.localModules + '/**/' + type + '/index.js');
+      if (matches.length > 1) {
+        throw new Error('The module ' + type + ' appears in multiple locations:\n' + matches.join('\n'));
+      }
+      projectLevelPath = matches[0] ? path.normalize(matches[0]) : projectLevelPath;
+    }
     if (fs.existsSync(projectLevelPath)) {
       projectLevelDefinition = self.root.require(projectLevelPath);
     }

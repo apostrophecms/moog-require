@@ -4,6 +4,8 @@ var fs = require('fs');
 var npmResolve = require('resolve');
 var path = require('path');
 var glob = require('glob');
+var importFresh = require('import-fresh');
+var resolveFrom = require('resolve-from');
 
 module.exports = function(options) {
   var self = require('moog')(options);
@@ -24,7 +26,7 @@ module.exports = function(options) {
       if (!bundlePath) {
         throw 'The configured bundle ' + bundleName + ' was not found in npm.';
       }
-      var bundle = require(bundlePath);
+      var bundle = importFresh(bundlePath);
       if (!bundle.moogBundle) {
         throw 'The configured bundle ' + bundleName + ' does not export a moogBundle property.';
       }
@@ -61,7 +63,7 @@ module.exports = function(options) {
       projectLevelPath = matches[0] ? path.normalize(matches[0]) : projectLevelPath;
     }
     if (fs.existsSync(projectLevelPath)) {
-      projectLevelDefinition = self.root.require(projectLevelPath);
+      projectLevelDefinition = importFresh(resolveFrom(path.dirname(self.root.filename), projectLevelPath));
     }
 
     var relativeTo;
@@ -73,9 +75,7 @@ module.exports = function(options) {
 
     var npmPath = getNpmPath(relativeTo, type);
     if (npmPath) {
-      // Make a shallow clone so we can be part of multiple chains
-      // in multiple moog objects without leakage
-      npmDefinition = _.clone(require(npmPath));
+      npmDefinition = importFresh(npmPath);
       npmDefinition.__meta = {
         npm: true,
         dirname: path.dirname(npmPath),
@@ -111,9 +111,8 @@ module.exports = function(options) {
       definition = {};
     }
 
-    // Make a shallow clone so we can be part of multiple chains
-    // in multiple moog objects without leakage
-    projectLevelDefinition = _.clone(projectLevelDefinition || {});
+    projectLevelDefinition = projectLevelDefinition || {};
+
     projectLevelDefinition.__meta = {
       dirname: path.dirname(projectLevelPath),
       filename: projectLevelPath

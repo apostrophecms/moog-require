@@ -348,6 +348,12 @@ If the same module exists in two places, an exception is thrown.
 
 ## Changelog
 
+1.1.1: use `importFresh` to avoid bugs when two instances of `moog-require` are
+loading the same module definitions. Previously if modules created by
+the two instances later modified sub-properties of `options`, they would
+inadvertently share values. This fix is critical for both `apostrophe-monitor`
+and `apostrophe-multisite`.
+
 1.1.0: support for the `nestedModuleSubdirs` option.
 
 1.0.1: shallowly clone the result of `require` rather than attaching `.__meta` to a potentially shared object. This allows multiple instances of `moog-require` in multiple instances of `apostrophe` to independently track where modules were loaded from.

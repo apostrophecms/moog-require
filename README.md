@@ -348,6 +348,8 @@ If the same module exists in two places, an exception is thrown.
 
 ## Changelog
 
+1.2.0: use `originalToMy` to handle moog class names with npm namespaces in them.
+
 1.1.1: use `importFresh` to avoid bugs when two instances of `moog-require` are
 loading the same module definitions. Previously if modules created by
 the two instances later modified sub-properties of `options`, they would

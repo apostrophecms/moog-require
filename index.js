@@ -136,7 +136,7 @@ module.exports = function(options) {
     if (npmDefinition && npmDefinition.improve) {
       // Restore the name of the improving module as otherwise our asset chains have
       // multiple references to my-foo which is ambiguous
-      result.__meta.name = 'my-' + originalType;
+      result.__meta.name = self.originalToMy(originalType);
     }
     return result;
   };

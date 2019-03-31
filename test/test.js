@@ -645,6 +645,29 @@ describe('moog', function() {
     });
   });
 
+  describe('scoped npm modules', function() {
+    it('should instantiate a scoped module from npm', async function() {
+      let synth = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        nestedModuleSubdirs: true,
+        root: module
+      });
+      synth.define({
+          '@test/test': {
+            construct: function(self, options) {
+              self.localWorked = true;
+            }
+          }
+        }
+      );
+
+      let instance = await synth.create('@test/test', {});
+      assert(instance);
+      assert(instance.localWorked);
+      assert(instance.npmWorked);
+    });
+  });
+
   describe('nestedModuleSubdirs option', function() {
     it('should load a module from a regular folder without the nesting feature enabled', async function() {
       let synth = require('../index.js')({

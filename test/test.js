@@ -552,6 +552,24 @@ describe('moog', function() {
     });
   });
 
+  describe('scoped bundles', function() {
+    it('should expose npm-style scoped modules via a bundle', async function() {
+      let synth = require('../index.js')({
+        localModules: __dirname + '/project_modules',
+        root: module,
+        bundles: [ 'testBundle' ]
+      });
+
+      synth.define({
+        '@scoped/bundleModule': { }
+      });
+
+      const modules = await createAll(synth, {}, {});
+      assert(modules['@scoped/bundleModule']);
+      assert(modules['@scoped/bundleModule'].scopedBundledModulesWork);
+    });
+  });
+
   describe('metadata', function() {
     it('should expose correct dirname metadata for npm, project level, and explicitly defined classes in the chain', async function() {
       let synth = require('../index.js')({

@@ -712,6 +712,17 @@ describe('moog', function() {
       assert(instance._options);
       assert(instance._options.color === 'green');
     });
+    it('should create a glob cache for nested modules', async function() {
+        let synth = require('../index.js')({
+          localModules: __dirname + '/project_modules',
+          nestedModuleSubdirs: true,
+          root: module
+        });
+
+        assert(Object.keys(synth._globCache).length === 0);
+        synth.define('nestedModule');
+        assert(Object.keys(synth._globCache).length > 0);
+    });
   });
 
 });

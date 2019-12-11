@@ -41,6 +41,11 @@ module.exports = function(options) {
   }
 
   var superDefine = self.define;
+
+  if (options.nestedModuleSubdirs) {
+    self._globCache = {};
+  }
+
   self.define = function(type, definition, extending) {
 
     var result;
@@ -56,7 +61,13 @@ module.exports = function(options) {
     var projectLevelPath = self.options.localModules + '/' + type + '/index.js';
 
     if (options.nestedModuleSubdirs) {
-      var matches = glob.sync(self.options.localModules + '/**/' + type + '/index.js');
+      var globOptions = {
+        cache: self._globCache
+      };
+
+      var matches = glob.sync(self.options.localModules + '/**/' + type + '/index.js', globOptions);
+      self._globCache = globOptions.cache;
+      
       if (matches.length > 1) {
         throw new Error('The module ' + type + ' appears in multiple locations:\n' + matches.join('\n'));
       }

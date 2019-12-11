@@ -348,6 +348,8 @@ If the same module exists in two places, an exception is thrown.
 
 ## Changelog
 
+2.2.0: implemented glob cache to avoid repeated filesystem operations when `nestedModuleDirs` is in use.
+
 2.1.0: use `originalToMy` method of moog 2.1.0 to ensure npm namespaces behave sensibly in class names.
 
 2.0.0: powered by `moog` version 2.x. This is a large and intentional bc break to support async/await rather than callbacks. No direct code changes in this module, as all of the changes in `moog` itself, involve instantiation, not definition. However the tests have been rewritten to match expectations for moog 2.x, which is designed for async/await, not callbacks. The 1.x series of moog-require and moog will be supported and maintained at least as long as Apostrophe 2.x (at least until the end of 2023).

@@ -348,6 +348,10 @@ If the same module exists in two places, an exception is thrown.
 
 ## Changelog
 
+2.3.0: achieved an approximately 100x performance improvement when `nestedModuleSubdirs` is in use by fetching
+a list of index.js files on the first `define` call and then searching that prefetched list each
+time. This solution is much faster than the glob module cache.
+
 2.2.0: implemented glob cache to avoid repeated filesystem operations when `nestedModuleDirs` is in use.
 
 2.1.0: use `originalToMy` method of moog 2.1.0 to ensure npm namespaces behave sensibly in class names.

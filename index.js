@@ -61,12 +61,15 @@ module.exports = function(options) {
     var projectLevelPath = self.options.localModules + '/' + type + '/index.js';
 
     if (options.nestedModuleSubdirs) {
-      var globOptions = {
-        cache: self._globCache
-      };
-
-      var matches = glob.sync(self.options.localModules + '/**/' + type + '/index.js', globOptions);
-      
+      if (!self._indexes) {
+        // Fetching a list of index.js files on the first call and then searching it each time for
+        // one that refers to the right type name shaves as much as 60 seconds off the startup
+        // time in a large project, compared to using the glob cache feature
+        self._indexes = glob.sync(self.options.localModules + '/**/index.js');
+      }
+      var matches = self._indexes.filter(function(index) {
+        return index.endsWith('/' + type + '/index.js');
+      });
       if (matches.length > 1) {
         throw new Error('The module ' + type + ' appears in multiple locations:\n' + matches.join('\n'));
       }

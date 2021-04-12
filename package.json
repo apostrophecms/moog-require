@@ -1,6 +1,6 @@
 {
   "name": "moog-require",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "moog-require extends moog with support for type definitions in local files and npm modules.",
   "main": "index.js",
   "dependencies": {

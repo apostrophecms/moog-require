@@ -1,28 +1,26 @@
 {
-  "name": "moog-require",
-  "version": "2.3.0",
-  "description": "moog-require extends moog with support for type definitions in local files and npm modules.",
-  "main": "index.js",
+  "author": {
+    "name": "Apostrophe Technologies"
+  },
+  "bugs": {
+    "url": "https://github.com/apostrophecms/moog-require/issues"
+  },
+  "bundleDependencies": false,
   "dependencies": {
     "async": "^1.0.0",
     "glob": "^7.1.3",
     "import-fresh": "^3.0.0",
     "lodash": "^4.0.0",
-    "moog": "^2.1.0",
+    "moog": "^1.0.0",
     "resolve": "^1.7.1",
     "resolve-from": "^4.0.0"
   },
+  "deprecated": false,
+  "description": "moog-require extends moog with support for type definitions in local files and npm modules.",
   "devDependencies": {
-    "bluebird": "^3.5.3",
     "mocha": "^5.0.0"
   },
-  "scripts": {
-    "test": "mocha test/test.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/punkave/moog-require"
-  },
+  "homepage": "https://github.com/apostrophecms/moog-require#readme",
   "keywords": [
     "apostrophe",
     "subclass",
@@ -30,6 +28,15 @@
     "module",
     "loader"
   ],
-  "author": "P'unk Avenue",
-  "license": "MIT"
+  "license": "MIT",
+  "main": "index.js",
+  "name": "moog-require",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/apostrophecms/moog-require.git"
+  },
+  "scripts": {
+    "test": "mocha test/test.js"
+  },
+  "version": "1.3.0"
 }

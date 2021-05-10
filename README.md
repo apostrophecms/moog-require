@@ -348,15 +348,13 @@ If the same module exists in two places, an exception is thrown.
 
 ## Changelog
 
-2.3.0: achieved an approximately 100x performance improvement when `nestedModuleSubdirs` is in use by fetching
+**The 2.x series is deprecated for new work, as its functionality was folded into Apostrophe 3.x. See below for 1.x release notes relevant to maintenance of Apostrophe 2.x.**
+
+1.3.0: achieved an approximately 100x performance improvement when `nestedModuleSubdirs` is in use by fetching
 a list of index.js files on the first `define` call and then searching that prefetched list each
 time. This solution is much faster than the glob module cache.
 
-2.2.0: implemented glob cache to avoid repeated filesystem operations when `nestedModuleDirs` is in use.
-
-2.1.0: use `originalToMy` method of moog 2.1.0 to ensure npm namespaces behave sensibly in class names.
-
-2.0.0: powered by `moog` version 2.x. This is a large and intentional bc break to support async/await rather than callbacks. No direct code changes in this module, as all of the changes in `moog` itself, involve instantiation, not definition. However the tests have been rewritten to match expectations for moog 2.x, which is designed for async/await, not callbacks. The 1.x series of moog-require and moog will be supported and maintained at least as long as Apostrophe 2.x (at least until the end of 2023).
+1.2.0: use `originalToMy` to handle moog class names with npm namespaces in them.
 
 1.1.1: use `importFresh` to avoid bugs when two instances of `moog-require` are loading the same module definitions. Previously if modules created by the two instances later modified sub-properties of `options`, they would inadvertently share values. This fix is critical for both `apostrophe-monitor` and `apostrophe-multisite`.
 

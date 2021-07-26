@@ -9,7 +9,9 @@
     "metadataNpm": "1.0.0",
     "replaceTestOriginal": "1.0.0",
     "replaceTestReplacement": "1.0.0",
-    "testBeforeConstructAsync": "1.0.0",
+    "testBeforeConstructAsync": "1.0.0"
+  },
+  "devDependencies": {
     "testBundle": "1.0.0",
     "testModule": "1.0.0",
     "testModuleFour": "1.0.0",

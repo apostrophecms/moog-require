@@ -200,24 +200,6 @@ describe('moog', function() {
       });
     });
 
-    it('should create a subclass when the parent is an npm dependency of the subclass', function(done) {
-      synth = require('../index.js')({
-        localModules: __dirname + '/project_modules',
-        root: module
-      });
-
-      synth.define({
-        'testModuleFour': {}
-      });
-
-      synth.create('testModuleFour', {}, function(err, testModuleFour) {
-        assert(!err);
-        assert(testModuleFour);
-        assert(testModuleFour._options.age === 70);
-        return done();
-      });
-    });
-
   });
 
 
@@ -806,5 +788,13 @@ describe('moog', function() {
       assert(instance._options.color === 'green');
     });
   });
-
+  it('should load a project level module properly when a transitive dependency not in package.json nevertheless has the same name and appears in node_modules', function() {
+    var synth = require('../index.js')({
+      localModules: __dirname + '/project_modules',
+      root: module
+    });
+    synth.define('sameNameAsTransitiveDependency');
+    var instance = synth.create('sameNameAsTransitiveDependency', {});
+    assert(instance.confirm === 'loaded');
+  });
 });

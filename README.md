@@ -350,6 +350,8 @@ If the same module exists in two places, an exception is thrown.
 
 **The 2.x series is deprecated for new work, as its functionality was folded into Apostrophe 3.x. See below for 1.x release notes relevant to maintenance of Apostrophe 2.x.**
 
+1.3.2: starting in version 1.3.1, this module only loads other modules via `npm` if they are explicit npm dependencies, which is necessary for stability and security. However, it is too strict: if the project has no `package.json` at all at the level of `app.js`, `npm` search up the tree, and this module should too. Beginning in verison 1.3.2, it does search up the tree. However it stops at the first `package.json` found.
+
 1.3.1: `moog-require` loads modules from npm if they exist there and are configured by name in the application. This was always intended only as a way to load direct, intentional dependencies of your project. However, since npm "flattens" the dependency tree, dependencies of dependencies that happen to have the same name as a project-level module could be loaded by default, crashing the site or causing unexpected behavior. So beginning with this release, `moog-require` scans `package.json` to verify an npm module is actually a dependency of the project itself before attempting to load it.
 
 1.3.0: achieved an approximately 100x performance improvement when `nestedModuleSubdirs` is in use by fetching
